@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: spark_cluster
+name: cluster
 description: Creates a Spark cluster and waits for it to be ready
 keywords:
   - spark

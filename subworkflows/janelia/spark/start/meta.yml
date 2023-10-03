@@ -1,5 +1,5 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
-name: spark_start
+name: start
 description: |
   Starts Spark processing either by spinning up a cluster or setting up
   variables so that processing can run locally as individual jobs
