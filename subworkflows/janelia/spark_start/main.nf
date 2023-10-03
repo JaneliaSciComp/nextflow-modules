@@ -1,4 +1,4 @@
-include { SPARK_CLUSTER } from '../cluster/main'
+include { SPARK_CLUSTER } from '../spark_cluster/main'
 
 /**
  * Prepares Spark contexts, either a distributed cluster or local.
