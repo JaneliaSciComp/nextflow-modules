@@ -48,7 +48,7 @@ workflow SPARK_START {
 
     // Rejoin Spark clusters to metas
     // channel: [ meta, spark_work_dir, spark_uri ]
-    spark_context = meta_tuples.map {
+    spark_context = ch_meta.map {
         def (meta, files) = it
         log.debug "Prepared $meta.id"
         [meta, meta.spark_work_dir, files]
