@@ -6,7 +6,7 @@ description: |
 keywords:
   - spark
   - bigdata
-components:
+subworkflows:
   - spark/cluster
 input:
   - ch_meta:
