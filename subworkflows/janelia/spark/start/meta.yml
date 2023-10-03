@@ -7,7 +7,7 @@ keywords:
   - spark
   - bigdata
 subworkflows:
-  - spark/cluster
+  - spark_cluster
 input:
   - ch_meta:
       type: tuple
