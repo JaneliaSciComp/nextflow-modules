@@ -19,7 +19,7 @@ nf-core modules -g git@github.com:JaneliaSciComp/nextflow-modules.git install sp
 ## Installing a subworkflow
 
 ```bash
-nf-core subworkflows -g git@github.com:JaneliaSciComp/nextflow-modules.git install spark/start
+nf-core subworkflows -g git@github.com:JaneliaSciComp/nextflow-modules.git install spark_start
 ```
 
-This will install the subworkflow and all of its dependencies including the spark/cluster subworkflow and all necessary modules.
+This will install the subworkflow and all of its dependencies including the spark_cluster subworkflow and all necessary modules.
