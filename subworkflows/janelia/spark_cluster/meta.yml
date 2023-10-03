@@ -4,6 +4,7 @@ description: Creates a Spark cluster and waits for it to be ready
 keywords:
   - spark
   - bigdata
+  - infrastructure
 components:
   - spark/prepare
   - spark/startmanager
