@@ -2,8 +2,8 @@
 
 nextflow.enable.dsl = 2
 
-include { SPARK_CLUSTER   } from '../../../../../subworkflows/local/spark/cluster/main.nf'
-include { SPARK_TERMINATE } from '../../../../../modules/local/spark/terminate/main.nf'
+include { SPARK_CLUSTER   } from '../../../../../subworkflows/janelia/spark_cluster/main.nf'
+include { SPARK_TERMINATE } from '../../../../../modules/janelia/spark/terminate/main.nf'
 
 workflow test_spark_cluster {
 
