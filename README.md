@@ -1,44 +1,12 @@
 # Nextflow modules
 
-This repository holes reusable modules, subworkflows that are used in Janelia Nextflow pipelines.
+This repository holds reusable modules, subworkflows that are used in Janelia Nextflow pipelines.
 
 The repository is formatted to be compatible with [nf-core tooling](https://nf-co.re/), in particular the [module system](https://github.com/nf-core/modules/tree/master).
 
 ## Prerequisites
 
 You  must [install nf-core tools](https://nf-co.re/tools) in your environment before you can install modules from this repository.
-
-## Initializing nf-core
-
-Your pipeline should be called `main.nf`, and you should have a `nextflow.config` in the same folder. 
-
-Create a `modules.json` file in that folder like this:
-```json
-{
-    "name": "",
-    "homePage": "",
-    "repos": {
-        "git@github.com:BioImageTools/nextflow-modules.git": {
-            "modules": {
-            }
-        }
-    }
-}
-```
-
-You have to create some empty directory and file structure:
-
-```bash
-touch .nf-core.yml
-mkdir modules
-```
-
-When you install a module, it may prompt you with some questions. Just accept the defaults:
-
-```
-Is this repository an nf-core pipeline or a fork of nf-core/modules? pipeline
-Would you like me to add this config now? yes
-```
 
 ## Installing a module
 
