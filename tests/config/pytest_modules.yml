@@ -1,16 +1,16 @@
-spark:
-  - subworkflows/local/spark/**
-  - tests/subworkflows/local/spark/**
-  - subworkflows/bits/spark_cluster/**
-  - tests/subworkflows/bits/spark/**
 cellpose:
-  - modules/bits/cellpose/**
-  - tests/modules/bits/cellpose/**
+  - modules/janelia/cellpose/**
+  - tests/modules/janelia/cellpose/**
 dask:
-  - modules/bits/dask/**
-  - tests/modules/bits/dask/**
-  - subworkflows/bits/dask_cluster/**
-  - subworkflows/bits/start_dask/**
-  - subworkflows/bits/stop_dask/**
-  - tests/subworkflows/bits/dask_cluster/**
-  - tests/subworkflows/bits/start_dask/**
+  - modules/janelia/dask/**
+  - tests/modules/janelia/dask/**
+  - subworkflows/janelia/dask_cluster/**
+  - subworkflows/janelia/dask_start/**
+  - subworkflows/janelia/dask_stop/**
+  - tests/subworkflows/janelia/dask_cluster/**
+  - tests/subworkflows/janelia/dask_start/**
+spark:
+  - subworkflows/janelia/spark_cluster/**
+  - subworkflows/janelia/spark_start/**
+  - subworkflows/janelia/spark_stop/**
+  - tests/subworkflows/janelia/spark/**
