@@ -1,6 +1,6 @@
-include { DASK_TERMINATE } from '../../../modules/bits/dask/terminate/main'
+include { DASK_TERMINATE } from '../../../modules/janelia/dask/terminate/main'
 
-workflow STOP_DASK {
+workflow DASK_STOP {
     take:
     meta_and_context     // channel: [val(meta), dask_context]
 

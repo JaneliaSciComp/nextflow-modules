@@ -1,12 +1,12 @@
-include { DASK_CLUSTER   } from '../../../../subworkflows/bits/dask_cluster/main.nf'
-include { DASK_TERMINATE } from '../../../../modules/bits/dask/terminate/main'
+include { DASK_CLUSTER   } from '../../../../subworkflows/janelia/dask_cluster/main.nf'
+include { DASK_TERMINATE } from '../../../../modules/janelia/dask/terminate/main'
 
-workflow test_start_one_dask_cluster {
+workflow test_one_dask_cluster {
     def test_dir = file("output/dask/dummy")
     test_dir.mkdirs()
 
     def dask_cluster_input = [
-        [id: 'test_start_dask_cluster'],
+        [id: 'test_one_dask_cluster'],
         []
     ]
 
@@ -29,7 +29,7 @@ workflow test_start_one_dask_cluster {
     | DASK_TERMINATE
 }
 
-workflow test_start_two_dask_clusters {
+workflow test_two_dask_clusters {
     def test_dir = file("output/dask/dummy")
     test_dir.mkdirs()
     def test_data_dir = file("output/dask/dummy/data")
@@ -37,7 +37,7 @@ workflow test_start_two_dask_clusters {
     def dask_cluster_input = [
         [
             [
-                id: 'test_start_two_dask_clusters_1',
+                id: 'test_two_dask_clusters_1',
             ],
             [test_data_dir],
         ],

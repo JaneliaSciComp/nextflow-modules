@@ -1,5 +1,5 @@
-include { START_DASK } from '../../../../subworkflows/bits/start_dask/main.nf'
-include { STOP_DASK  } from '../../../../subworkflows/bits/stop_dask/main.nf'
+include { DASK_START } from '../../../../subworkflows/janelia/dask_start/main.nf'
+include { DASK_STOP  } from '../../../../subworkflows/janelia/dask_stop/main.nf'
 
 params.distributed = true
 
@@ -9,7 +9,7 @@ workflow test_start_stop_dask {
         [/* empty data paths */],
     ]
 
-    def dask_cluster_info = START_DASK(
+    def dask_cluster_info = DASK_START(
         Channel.of(dask_cluster_input),
         params.distributed,
         file(params.dask_work_dir),
@@ -23,7 +23,7 @@ workflow test_start_stop_dask {
         log.info "Cluster info: $it"
     }
 
-    def terminated_cluster = STOP_DASK(dask_cluster_info)
+    def terminated_cluster = DASK_STOP(dask_cluster_info)
 
     terminated_cluster.subscribe {
         log.info "Terminated cluster info: $it"

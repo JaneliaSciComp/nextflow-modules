@@ -1,6 +1,6 @@
 include { DASK_CLUSTER } from '../dask_cluster/main'
 
-workflow START_DASK {
+workflow DASK_START {
     take:
     meta_and_files       // channel: [val(meta), files...]
     distributed          // bool: if true create distributed cluster

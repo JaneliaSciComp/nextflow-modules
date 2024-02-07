@@ -1,8 +1,8 @@
-include { DASK_PREPARE        } from '../../../modules/bits/dask/prepare/main'
-include { DASK_STARTMANAGER   } from '../../../modules/bits/dask/startmanager/main'
-include { DASK_WAITFORMANAGER } from '../../../modules/bits/dask/waitformanager/main'
-include { DASK_STARTWORKER    } from '../../../modules/bits/dask/startworker/main'
-include { DASK_WAITFORWORKERS } from '../../../modules/bits/dask/waitforworkers/main'
+include { DASK_PREPARE        } from '../../../modules/janelia/dask/prepare/main'
+include { DASK_STARTMANAGER   } from '../../../modules/janelia/dask/startmanager/main'
+include { DASK_WAITFORMANAGER } from '../../../modules/janelia/dask/waitformanager/main'
+include { DASK_STARTWORKER    } from '../../../modules/janelia/dask/startworker/main'
+include { DASK_WAITFORWORKERS } from '../../../modules/janelia/dask/waitforworkers/main'
 
 workflow DASK_CLUSTER {
     take:
