@@ -1,5 +1,6 @@
 .nextflow*
 work/
+mylocal*
 results/
 test_output/
 output/
