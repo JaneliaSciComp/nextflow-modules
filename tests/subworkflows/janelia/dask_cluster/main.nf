@@ -43,7 +43,7 @@ workflow test_two_dask_clusters {
         ],
         [
             [
-                id: 'test_start_two_dask_clusters_2',
+                id: 'test_two_dask_clusters_2',
             ], 
             [/* empty data file list*/],
         ],
@@ -54,8 +54,8 @@ workflow test_two_dask_clusters {
         test_dir,
         3, // dask workers
         2, // required workers
-        1, // worker cores
-        1.5, // worker mem
+        0.25, // worker cores
+        1, // worker mem
     )
 
     dask_cluster_info
