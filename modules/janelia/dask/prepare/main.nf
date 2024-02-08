@@ -1,6 +1,6 @@
 process DASK_PREPARE {
     label 'process_low'
-    container { task.ext.container ?: 'bioimagetools/dask:2023.10.1-py11-ol9' }
+    container { task.ext.container ?: 'janeliascicomp/dask:2023.10.1-py11-ol9' }
 
     input:
     tuple val(meta), path(data)

@@ -1,5 +1,5 @@
 process DASK_STARTWORKER {
-    container { task.ext.container ?: 'bioimagetools/dask:2023.10.1-py11-ol9' }
+    container { task.ext.container ?: 'janeliascicomp/dask:2023.10.1-py11-ol9' }
     cpus { worker_cpus }
     memory "${worker_mem_in_gb} GB"
     clusterOptions { task.ext.cluster_opts }

@@ -1,6 +1,6 @@
 process DASK_TERMINATE {
     label 'process_low'
-    container { task.ext.container ?: 'bioimagetools/dask:2023.10.1-py11-ol9' }
+    container { task.ext.container ?: 'janeliascicomp/dask:2023.10.1-py11-ol9' }
 
     input:
     tuple val(meta), path(cluster_work_dir, stageAs: 'dask_work/*')
