@@ -1,0 +1,56 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
+name: ometiff_to_n5
+description: Convert OME-TIFF to N5 on a dask cluster
+keywords:
+  - dask
+  - OME-TIFF
+  - N5
+tools:
+  - "ometiff_to_n5":
+      description: "Convert OME-TIFF to N5"
+      homepage: "https://github.com/JaneliaSciComp/n5-dask.git"
+      tool_dev_url: "https://github.com/JaneliaSciComp/n5-dask.git"
+      license: "['BSD-3-Clause']"
+input:
+  - meta:
+      type: map
+      description: |
+        Groovy map containing: id
+  - input_path:
+      type: file
+      description: Path to the OME-TIFF file
+  - output_path:
+      type: directory
+      description: Output directory for N5 container
+  - output_name:
+      type: string
+      description: Name of the N5 container.
+  - scale_subpath:
+      type: string
+      description: Relative path to the scale 0 location.
+  - dask_scheduler:
+      type: string
+      description: Dask scheduler IP
+  - dask_config:
+      type: file
+      description: |
+        Optional path to the dask config. If this is not specified pass in as empty list.
+  - ncpus:
+      type: integer
+      description: Number of cpus needed to run the main ometiff to n5 program
+  - mem_gb:
+      type: string
+      description: Memory needed for the main ometiff to n5 program
+output:
+  - meta:
+      type: map
+      description: |
+        Groovy map containing: id, input_image_dataset, output_image_name
+  - versions:
+      type: file
+      description: File containing software versions
+      pattern: "versions.yml"
+authors:
+  - "@cgoina"
+maintainers:
+  - "@cgoina"
