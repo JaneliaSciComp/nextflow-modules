@@ -1,5 +1,5 @@
 process N5_MULTISCALE {
-    container { task.ext.container ?: 'ghcr.io/janeliascicom/n5-tools-dask:0.0.1' }
+    container { task.ext.container ?: 'janeliascicomp/n5-tools-dask:dev' }
     cpus { ncpus }
     memory "${mem_gb} GB"
 
@@ -20,16 +20,22 @@ process N5_MULTISCALE {
 
     script:
     def args = task.ext.args ?: ''
+    def fullscale_subpath_arg = fullscale_subpath
+        ? "--fullscale-path ${fullscale_subpath}"
+        : ''
     def dask_scheduler_arg = dask_scheduler ? "--dask-scheduler ${dask_scheduler}" : ''
     def dask_config_arg = dask_config ? "--dask-config ${dask_config}" : ''
 
     """
-    output_fullpath=\$(readlink ${output_path})
-    mkdir -p \${output_fullpath}
+    # resolve the input symlink because
+    # links are not followed in python code
+    input_fullpath=\$(readlink ${input_path})
 
-    python /app/ometif_to_n5.py \
-        -i ${input_path} \
-        -o ${output_path}/${output_name} -d ${scale_subpath} \
+    echo "Build multiscale pyramid for: \${input_fullpath}/${n5_name}"
+    python /opt/scripts/n5-tools-dask/n5_multiscale.py \
+        -i \${input_fullpath}/${n5_name} \
+        --data-sets ${n5_subpaths} \
+        ${fullscale_subpath_arg} \
         ${dask_scheduler_arg} \
         ${dask_config_arg} \
         ${args}

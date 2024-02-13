@@ -1,5 +1,5 @@
 process OMETIFF_TO_N5 {
-    container { task.ext.container ?: 'ghcr.io/janeliascicom/n5-tools-dask:0.0.1' }
+    container { task.ext.container ?: 'janeliascicomp/n5-tools-dask:0.0.1' }
     cpus { ncpus }
     memory "${mem_gb} GB"
 
