@@ -1,4 +1,4 @@
-process OMETIFF_TO_N5 {
+process N5_MULTISCALE {
     container { task.ext.container ?: 'ghcr.io/janeliascicom/n5-tools-dask:0.0.1' }
     cpus { ncpus }
     memory "${mem_gb} GB"
@@ -6,17 +6,17 @@ process OMETIFF_TO_N5 {
     input:
     tuple val(meta),
           path(input_path),
-          path(output_path),
-          val(output_name),
-          val(scale_subpath)
+          val(n5_name),
+          val(n5_subpaths),
+          val(fullscale_subpath)
     tuple val(dask_scheduler),
           path(dask_config)
     val(ncpus)
     val(mem_gb)
 
     output:
-    tuple val(meta), path(input_path), path("${output_path}/${output_name}/c*"), val(output_name), val(scale_subpath), emit: results
-    path('versions.yml')                                                                                             , emit: versions
+    tuple val(meta), path(input_path), emit: results
+    path('versions.yml')             , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -27,7 +27,7 @@ process OMETIFF_TO_N5 {
     output_fullpath=\$(readlink ${output_path})
     mkdir -p \${output_fullpath}
 
-    python /opt/scripts/n5-tools-dask/ometif_to_n5.py \
+    python /app/ometif_to_n5.py \
         -i ${input_path} \
         -o ${output_path}/${output_name} -d ${scale_subpath} \
         ${dask_scheduler_arg} \
