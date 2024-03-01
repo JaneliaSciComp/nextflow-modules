@@ -27,11 +27,10 @@ process BIGSTREAM_LOCAL_ALIGN {
     tuple val(meta),
           path(fix_image), val(fix_image_subpath),
           path(mov_image), val(mov_image_subpath),
-          path(fix_mask), val(fix_mask_subpath), // optional
-          path(mov_mask), val(mov_mask_subpath), // optional
           path(output_dir), 
-          val(transform_name)
-          val(alignment_name)
+          val(transform_name),
+          val(inv_transform_name),
+          val(alignment_name)                    , emit: results
 
     when:
     task.ext.when == null || task.ext.when

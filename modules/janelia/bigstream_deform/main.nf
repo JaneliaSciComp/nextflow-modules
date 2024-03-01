@@ -23,7 +23,7 @@ process BIGSTREAM_DEFORM {
     tuple val(meta),
           path(fix_image), val(fix_image_subpath),
           path(mov_image), val(mov_image_subpath),
-          path(output_dir), val(output_subpath)
+          path(output_dir), val(output_subpath)  , emit: results
 
     when:
     task.ext.when == null || task.ext.when
