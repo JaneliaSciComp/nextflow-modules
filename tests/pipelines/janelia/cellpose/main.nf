@@ -1,10 +1,7 @@
-include { DASK_PREPARE        } from '../../../../modules/janelia/dask/prepare/main'
-include { DASK_STARTMANAGER   } from '../../../../modules/janelia/dask/startmanager/main'
-include { DASK_STARTWORKER    } from '../../../../modules/janelia/dask/startworker/main'
-include { DASK_TERMINATE      } from '../../../../modules/janelia/dask/terminate/main'
-include { DASK_WAITFORMANAGER } from '../../../../modules/janelia/dask/waitformanager/main'
-include { DASK_WAITFORWORKERS } from '../../../../modules/janelia/dask/waitforworkers/main'
-include { CELLPOSE            } from '../../../../modules/janelia/cellpose/main'
+include { CELLPOSE   } from '../../../../modules/janelia/cellpose/main'
+
+include { DASK_START } from '../../../../subworkflows/janelia/dask_start/main'
+include { DASK_STOP  } from '../../../../subworkflows/janelia/dask_stop/main'
 
 process UNTAR_RAW_INPUT {
     container { task.ext.container }
@@ -41,31 +38,23 @@ workflow test_distributed_cellpose_with_dask {
     }
     cellpose_test_data.subscribe { log.info "Cellpose path inputs: $it" }
     // create a dask cluster
-    def dask_prepare_result = DASK_PREPARE(cellpose_test_data, file(params.dask_work_dir))
-    DASK_STARTMANAGER(dask_prepare_result)
-    DASK_WAITFORMANAGER(dask_prepare_result)
-    def dask_cluster_info = DASK_WAITFORMANAGER.out.cluster_info
-    def dask_workers_list = 1..params.cellpose_workers
+    def dask_cluster = DASK_START(
+        cellpose_test_data,
+        true, // distributed
+        file(params.dask_work_dir),
+        params.cellpose_workers,
+        params.cellpose_required_workers,
+        params.cellpose_worker_cpus,
+        params.cellpose_worker_mem_gb
+    )
 
-    def dask_workers_input = dask_cluster_info
-    | join(cellpose_test_data, by: 0)
-    | combine(dask_workers_list)
-    | multiMap { meta, cluster_work_dir, scheduler_address, data, worker_id ->
-        log.info "Cluster data files: ${data}"
-        worker_info: [ meta, cluster_work_dir, scheduler_address, worker_id ]
-        data: data
+    dask_cluster.subscribe {
+        log.info "Cluster info: $it"
     }
-    DASK_STARTWORKER(dask_workers_input.worker_info,
-                     dask_workers_input.data,
-                     params.cellpose_worker_cpus,
-                     params.cellpose_worker_mem_gb)
-    def cluster = DASK_WAITFORWORKERS(dask_cluster_info,
-                                      params.cellpose_workers,
-                                      params.cellpose_required_workers)
 
-    def cellpose_input = cluster.cluster_info
+    def cellpose_input = dask_cluster
     | join(cellpose_test_data, by: 0)
-    | multiMap { meta, cluster_work_dir, scheduler_address, available_workers, datapaths ->
+    | multiMap { meta, cluster_context, datapaths ->
         def (input_path, output_path) = datapaths
         def cellpose_working_path = params.cellpose_work_dir
             ? file(params.cellpose_work_dir) : []
@@ -73,6 +62,7 @@ workflow test_distributed_cellpose_with_dask {
             ? file(params.dask_config) : []
         def cellpose_models_path = params.cellpose_models_dir
             ? file(params.cellpose_models_dir) : []
+
         def data = [
             meta,
             input_path,
@@ -83,7 +73,7 @@ workflow test_distributed_cellpose_with_dask {
             cellpose_working_path,
         ]
         def cluster_info = [
-            scheduler_address,
+            cluster_context.scheduler_address,
             dask_config_path,
         ]
         data: data
@@ -101,12 +91,13 @@ workflow test_distributed_cellpose_with_dask {
         log.info "Cellpose results: $it"
     }
 
-    cluster.cluster_info.join(cellpose_results.results, by:0)
+    dask_cluster.join(cellpose_results.results, by:0)
     | map {
-        def (meta, cluster_work_dir) = it
-        [ meta, cluster_work_dir ]
+        def (meta, cluster_context) = it
+        [ meta, cluster_context ]
     }
-    | DASK_TERMINATE
+    | groupTuple
+    | DASK_STOP
 
 }
 
