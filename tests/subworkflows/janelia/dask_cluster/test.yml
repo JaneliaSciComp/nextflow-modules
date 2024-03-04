@@ -1,5 +1,11 @@
-- name: start single dask cluster
-  command: nextflow run ./tests/subworkflows/janelia/dask_cluster/main.nf -entry test_one_dask_cluster -c ./tests/subworkflows/janelia/dask_cluster/nextflow.config
+- name: start local dask cluster
+  command: nextflow run ./tests/subworkflows/janelia/dask_cluster/main.nf -entry test_start_stop_dask -c ./tests/subworkflows/janelia/dask_cluster/nextflow.config --distributed false
+  tags:
+    - dask
+  files:
+    - path: output/dask/versions.yml
+- name: start distributed dask cluster
+  command: nextflow run ./tests/subworkflows/janelia/dask_cluster/main.nf -entry test_start_stop_dask -c ./tests/subworkflows/janelia/dask_cluster/nextflow.config --distributed true
   tags:
     - dask
   files:

@@ -1,32 +1,34 @@
-include { DASK_CLUSTER   } from '../../../../subworkflows/janelia/dask_cluster/main.nf'
-include { DASK_TERMINATE } from '../../../../modules/janelia/dask/terminate/main'
+include { DASK_START } from '../../../../subworkflows/janelia/dask_start/main.nf'
+include { DASK_STOP  } from '../../../../subworkflows/janelia/dask_stop/main.nf'
 
-workflow test_one_dask_cluster {
-    def test_dir = file("output/dask/dummy")
-    test_dir.mkdirs()
+params.distributed = true
 
+workflow test_start_stop_dask {
     def dask_cluster_input = [
-        [id: 'test_one_dask_cluster'],
-        []
+        [id: 'test_local_dask'],
+        [/* empty data paths */],
     ]
 
-    def dask_cluster_info = DASK_CLUSTER(
+    def dask_cluster_info = DASK_START(
         Channel.of(dask_cluster_input),
-        test_dir, // dask work dir
+        params.distributed,
+        file(params.dask_work_dir),
         3, // dask workers
         2, // required workers
         1, // worker cores
         1.5, // worker mem
     )
 
-    dask_cluster_info 
-    | map { 
-        // only get the first 2 fields from input
-        def (meta, cluster_work_dir) = it
-        log.info "Started dask cluster: $it"
-        [ meta, cluster_work_dir ]
+    dask_cluster_info.subscribe {
+        log.info "Cluster info: $it"
     }
-    | DASK_TERMINATE
+
+    def terminated_cluster = DASK_STOP(dask_cluster_info)
+
+    terminated_cluster.subscribe {
+        log.info "Terminated cluster info: $it"
+    }
+
 }
 
 workflow test_two_dask_clusters {
@@ -49,8 +51,9 @@ workflow test_two_dask_clusters {
         ],
     ]
 
-    def dask_cluster_info = DASK_CLUSTER(
+    def dask_cluster_info = DASK_START(
         Channel.fromList(dask_cluster_input),
+        true,
         test_dir,
         3, // dask workers
         2, // required workers
@@ -58,12 +61,5 @@ workflow test_two_dask_clusters {
         1, // worker mem
     )
 
-    dask_cluster_info
-    | map { 
-        // only get the first 2 fields from input
-        def (meta, cluster_work_dir) = it
-        log.info "Started dask cluster: $it"
-        [ meta, cluster_work_dir ]
-    }
-    | DASK_TERMINATE
+    DASK_STOP(dask_cluster_info)
 }
