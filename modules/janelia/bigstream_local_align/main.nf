@@ -5,18 +5,16 @@ process BIGSTREAM_LOCAL_ALIGN {
 
     input:
     tuple val(meta),
-          path(fix_image),
-          val(fix_image_subpath),
-          path(mov_image),
-          val(mov_image_subpath),
+          path(fix_image), val(fix_image_subpath),
+          path(mov_image), val(mov_image_subpath),
+          path(fix_mask), val(fix_mask_subpath),
+          path(mov_mask), val(mov_mask_subpath),
           val(affine_dir), // this is the global affine location
           val(affine_transform_name), // global affine file name
           val(steps),
           path(output_dir),
-          val(transform_name),
-          val(transform_subpath),
-          val(inv_transform_name),
-          val(inv_transform_subpath),
+          val(transform_name), val(transform_subpath),
+          val(inv_transform_name), val(inv_transform_subpath),
           val(alignment_name) // alignment name
     tuple val(dask_scheduler),
           path(dask_config) // this is optional - if undefined pass in as empty list ([])

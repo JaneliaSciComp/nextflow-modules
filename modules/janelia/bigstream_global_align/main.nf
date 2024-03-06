@@ -5,10 +5,10 @@ process BIGSTREAM_GLOBAL_ALIGN {
 
     input:
     tuple val(meta),
-          path(fix_image),
-          val(fix_image_subpath),
-          path(mov_image),
-          val(mov_image_subpath),
+          path(fix_image), val(fix_image_subpath),
+          path(mov_image), val(mov_image_subpath),
+          path(fix_mask), val(fix_mask_subpath),
+          path(mov_mask), val(mov_mask_subpath),
           val(steps),
           path(output_dir),
           val(transform_name), // name of the affine transformation
