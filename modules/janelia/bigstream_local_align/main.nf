@@ -16,9 +16,12 @@ process BIGSTREAM_LOCAL_ALIGN {
           val(transform_name), val(transform_subpath),
           val(inv_transform_name), val(inv_transform_subpath),
           val(alignment_name) // alignment name
+
     tuple val(dask_scheduler),
           path(dask_config) // this is optional - if undefined pass in as empty list ([])
+
     val(bigstream_cpus)
+
     val(bigstream_mem_in_gb)
 
     output:
@@ -41,8 +44,8 @@ process BIGSTREAM_LOCAL_ALIGN {
     def fix_mask_subpath_arg = fix_mask && fix_mask_subpath ? "--fixed-local-mask-subpath ${fix_mask_subpath}" : ''
     def mov_mask_arg = mov_mask ? "--moving-local-mask ${mov_mask}" : ''
     def mov_mask_subpath_arg = mov_mask && mov_mask_subpath ? "--moving-local-mask-subpath ${mov_mask_subpath}" : ''
-    def affine_dir_arg = affine_dir ? "--global-output-dir ${affine_dir}"
-    def affine_transform_name_arg = affine_transform_name ? "--global-transform-name ${affine_transform_name}"
+    def affine_dir_arg = affine_dir ? "--global-output-dir ${affine_dir}" : ''
+    def affine_transform_name_arg = affine_transform_name ? "--global-transform-name ${affine_transform_name}" : ''
     def steps_arg = steps ? "--local-registration-steps ${steps}" : ''
     def transform_name_arg = transform_name ? "--local-transform-name ${transform_name}" : ''
     def transform_subpath_arg = transform_subpath ? "--local-transform-subpath ${transform_subpath}" : ''
