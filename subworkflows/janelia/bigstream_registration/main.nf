@@ -1,7 +1,6 @@
-include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream_global_align/main';
-include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream_local_align/main';
-
-include { DASK_START             } from '../../dask_start/main'
+include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream_global_align/main'
+include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream_local_align/main'
+include { DASK_START             } from '../dask_start/main'
 
 workflow BIGSTREAM_REGISTRATION {
     take:
@@ -38,7 +37,7 @@ workflow BIGSTREAM_REGISTRATION {
     global_align_mem_gb
     local_align_cpus
     local_align_mem_gb
-    do_not_destroy_cluster // if this is true the caller is responsible for destroying the cluster
+    do_not_destroy_cluster  // if this is true the caller is responsible for destroying the cluster
 
     main:    
     def global_align_input = registration_input
@@ -51,7 +50,7 @@ workflow BIGSTREAM_REGISTRATION {
              global_steps,
              global_output,
              global_transform_name,
-             global_align_name,
+             global_align_name
             ) = it // there's a lot more in the input but we only look at what we are interested here
         def r = [
             meta,
@@ -71,7 +70,7 @@ workflow BIGSTREAM_REGISTRATION {
     def global_align_results = BIGSTREAM_GLOBAL_ALIGN(
         global_align_input,
         global_align_cpus,
-        global_align_mem_gb
+        global_align_mem_gb,
     )
 
     global_align_results.subscribe {
@@ -106,7 +105,7 @@ workflow BIGSTREAM_REGISTRATION {
              dask_total_workers,
              dask_min_workers,
              dask_worker_cpus,
-             dask_worker_mem_gb,
+             dask_worker_mem_gb
              ) = it
 
         def cluster_files =
@@ -120,7 +119,7 @@ workflow BIGSTREAM_REGISTRATION {
             with_dask ? dask_total_workers : 0,
             with_dask ? dask_min_workers : 0,
             with_dask ? dask_worker_cpus : 0,
-            with_dask ? dask_worker_mem_gb : 0,
+            with_dask ? dask_worker_mem_gb : 0
         ]
         cluster_files: cluster_files
         cluster_resources: cluster_resources
@@ -162,7 +161,7 @@ workflow BIGSTREAM_REGISTRATION {
              local_align_name,
              with_dask,
              dask_work_dir,
-             dask_config,
+             dask_config
             ) = it
         def data = [
             meta,
