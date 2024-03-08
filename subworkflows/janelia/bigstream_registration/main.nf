@@ -177,57 +177,61 @@ workflow BIGSTREAM_REGISTRATION {
             meta,
             local_fix, local_fix_subpath,
             local_mov, local_mov_subpath,
-            local_fix_mask, local_fix_mask_subpath,
-            local_mov_mask, local_mov_mask_subpath,
+            local_fix_mask ?: [],
+            local_fix_mask_subpath,
+            local_mov_mask ?: [],
+            local_mov_mask_subpath,
             global_output,
             global_transform_name,
             local_steps,
             local_output,
-            local_transform_name, local_transform_subpath,
-            local_inv_transform_name, local_inv_transform_subpath,
+            local_transform_name,
+            local_transform_subpath,
+            local_inv_transform_name,
+            local_inv_transform_subpath,
             local_align_name,
         ]
         def cluster = [
             cluster_context.scheduler_address,
-            dask_config,
+            dask_config ?: [],
         ]
         log.info "Prepare local alignment: $it -> $data, $cluster"
         data: data
         cluster: cluster
     }
 
-    // def local_align_results = BIGSTREAM_LOCAL_ALIGN(
-    //     local_align_input.data,
-    //     local_align_input.cluster,
-    //     local_align_cpus,
-    //     local_align_mem_gb,
-    // )
+    def local_align_results = BIGSTREAM_LOCAL_ALIGN(
+        local_align_input.data,
+        local_align_input.cluster,
+        local_align_cpus,
+        local_align_mem_gb,
+    )
 
-    // local_align_results.subscribe {
-    //     log.info "Completed local alignment -> $it"
-    // }
+    local_align_results.subscribe {
+        log.info "Completed local alignment -> $it"
+    }
 
-    // if (do_not_destroy_cluster) {
-    //     cluster = cluster_info
-    // } else {
-    //     // destroy the cluster when the local alignment is complete
-    //     cluster = cluster_info
-    //     | join(local_align_results, by: 0)
-    //     | map {
-    //         def (meta, cluster_context) = it
-    //         [ meta, cluster_context ]
-    //     }
-    //     | DASK_STOP
-    //     | map {
-    //         def (meta, cluster_work_dir) = it
-    //         [
-    //             meta, [:],
-    //         ]
-    //     }
-    // }
+    if (do_not_destroy_cluster) {
+        cluster = cluster_info
+    } else {
+        // destroy the cluster when the local alignment is complete
+        cluster = cluster_info
+        | join(local_align_results, by: 0)
+        | map {
+            def (meta, cluster_context) = it
+            [ meta, cluster_context ]
+        }
+        | DASK_STOP
+        | map {
+            def (meta, cluster_work_dir) = it
+            [
+                meta, [:],
+            ]
+        }
+    }
 
     emit:
     global = global_align_results 
-    // local = local_align_results
-    cluster = cluster_info
+    local = local_align_results
+    cluster
 }

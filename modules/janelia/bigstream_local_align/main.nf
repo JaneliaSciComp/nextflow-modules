@@ -13,7 +13,7 @@ process BIGSTREAM_LOCAL_ALIGN {
           val(fix_mask_subpath),
           path(mov_mask, stageAs: 'movmask/*'),
           val(mov_mask_subpath),
-          val(affine_dir, stageAs: 'global_affine/*'), // this is the global affine location
+          path(affine_dir, stageAs: 'global_affine/*'), // this is the global affine location
           val(affine_transform_name), // global affine file name
           val(steps),
           path(output_dir),
