@@ -35,7 +35,7 @@ workflow test_registration_with_dask {
             params.dask_work_dir ? file(params.dask_work_dir) : '',
             params.dask_config ? file(params.dask_config) : '',
             params.local_align_workers,
-            params.local_align_workers,
+            params.local_align_min_workers,
             params.local_align_worker_cpus,
             params.local_align_worker_mem_gb,
         ]
