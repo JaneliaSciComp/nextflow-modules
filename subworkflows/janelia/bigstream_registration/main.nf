@@ -109,9 +109,14 @@ workflow BIGSTREAM_REGISTRATION {
              ) = it
 
         def cluster_files =
-            [ meta, global_output, local_fix, local_mov, local_output ] + 
+            [ 
+                global_output, local_fix, local_mov, local_output
+            ] + 
             (local_fix_mask ? [local_fix_mask] :[]) +
             (local_mov_mask ? [local_mov_mask] :[])
+
+        def cluster_files_set = cluster_files as Set
+        log.info "Cluster files: ${cluster_files_set}"
 
         def cluster_resources = [
             with_dask,
@@ -121,18 +126,23 @@ workflow BIGSTREAM_REGISTRATION {
             with_dask ? dask_worker_cpus : 0,
             with_dask ? dask_worker_mem_gb : 0
         ]
-        cluster_files: cluster_files
+
+        log.info "Cluster resources: $cluster_resources"
+
+        cluster_files: [ meta, cluster_files_set ]
         cluster_resources: cluster_resources
     }
 
     def cluster_info = DASK_START(
         cluster_input.cluster_files,
-        cluster_input.cluster_resources.map { it[0] /*with dask*/ },
-        cluster_input.cluster_resources.map { it[1] /* work_dir */ },
-        cluster_input.cluster_resources.map { it[2] /* total_workers */ },
-        cluster_input.cluster_resources.map { it[3] /* min_workers */ },
-        cluster_input.cluster_resources.map { it[4] /* worker_cpus */ },
-        cluster_input.cluster_resources.map { it[5] /* worker_mem_gb */ },
+        // all the other args will be converted to a value channel
+        // by getting the first element only
+        cluster_input.cluster_resources.map { it[0] /*with dask*/ }.first(),
+        cluster_input.cluster_resources.map { it[1] /* work_dir */ }.first(),
+        cluster_input.cluster_resources.map { it[2] /* total_workers */ }.first(),
+        cluster_input.cluster_resources.map { it[3] /* min_workers */ }.first(),
+        cluster_input.cluster_resources.map { it[4] /* worker_cpus */ }.first(),
+        cluster_input.cluster_resources.map { it[5] /* worker_mem_gb */ }.first(),
     )
 
     def local_align_input = cluster_info
@@ -186,38 +196,38 @@ workflow BIGSTREAM_REGISTRATION {
         cluster: cluster
     }
 
-    def local_align_results = BIGSTREAM_LOCAL_ALIGN(
-        local_align_input.data,
-        local_align_input.cluster,
-        local_align_cpus,
-        local_align_mem_gb,
-    )
+    // def local_align_results = BIGSTREAM_LOCAL_ALIGN(
+    //     local_align_input.data,
+    //     local_align_input.cluster,
+    //     local_align_cpus,
+    //     local_align_mem_gb,
+    // )
 
-    local_align_results.subscribe {
-        log.debug "Completed local alignment -> $it"
-    }
+    // local_align_results.subscribe {
+    //     log.debug "Completed local alignment -> $it"
+    // }
 
-    if (do_not_destroy_cluster) {
-        cluster = cluster_info
-    } else {
-        // destroy the cluster when the local alignment is complete
-        cluster = cluster_info
-        | join(local_align_results, by: 0)
-        | map {
-            def (meta, cluster_context) = it
-            [ meta, cluster_context ]
-        }
-        | DASK_STOP
-        | map {
-            def (meta, cluster_work_dir) = it
-            [
-                meta, [:],
-            ]
-        }
-    }
+    // if (do_not_destroy_cluster) {
+    //     cluster = cluster_info
+    // } else {
+    //     // destroy the cluster when the local alignment is complete
+    //     cluster = cluster_info
+    //     | join(local_align_results, by: 0)
+    //     | map {
+    //         def (meta, cluster_context) = it
+    //         [ meta, cluster_context ]
+    //     }
+    //     | DASK_STOP
+    //     | map {
+    //         def (meta, cluster_work_dir) = it
+    //         [
+    //             meta, [:],
+    //         ]
+    //     }
+    // }
 
     emit:
-    global = global_align_results 
-    local = local_align_results
-    cluster
+    // global = global_align_results 
+    // local = local_align_results
+    cluster = cluster_info
 }

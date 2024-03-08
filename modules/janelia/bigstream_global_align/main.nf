@@ -5,10 +5,14 @@ process BIGSTREAM_GLOBAL_ALIGN {
 
     input:
     tuple val(meta),
-          path(fix_image), val(fix_image_subpath),
-          path(mov_image), val(mov_image_subpath),
-          path(fix_mask), val(fix_mask_subpath),
-          path(mov_mask), val(mov_mask_subpath),
+          path(fix_image, stageAs: 'fix/*'),
+          val(fix_image_subpath),
+          path(mov_image, stageAs: 'mov/*'),
+          val(mov_image_subpath),
+          path(fix_mask, stageAs: 'fixmask/*'),
+          val(fix_mask_subpath),
+          path(mov_mask, stageAs: 'movmask/*'),
+          val(mov_mask_subpath),
           val(steps),
           path(output_dir),
           val(transform_name), // name of the affine transformation
@@ -46,8 +50,8 @@ process BIGSTREAM_GLOBAL_ALIGN {
     python /app/bigstream/scripts/main_align_pipeline.py \
         --fixed-global ${fix_image} ${fix_image_subpath_arg} \
         --moving-global ${mov_image} ${mov_image_subpath_arg} \
-        ${fix_mask_arg} ${fix_mask_supath_arg} \
-        ${mov_mask_arg} ${mov_mask_supath_arg} \
+        ${fix_mask_arg} ${fix_mask_subpath_arg} \
+        ${mov_mask_arg} ${mov_mask_subpath_arg} \
         ${steps_arg} \
         --global-output-dir ${output_dir} \
         ${transform_name_arg} \

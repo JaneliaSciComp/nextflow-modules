@@ -5,16 +5,22 @@ process BIGSTREAM_LOCAL_ALIGN {
 
     input:
     tuple val(meta),
-          path(fix_image), val(fix_image_subpath),
-          path(mov_image), val(mov_image_subpath),
-          path(fix_mask), val(fix_mask_subpath),
-          path(mov_mask), val(mov_mask_subpath),
-          val(affine_dir), // this is the global affine location
+          path(fix_image, stageAs: 'fix/*'),
+          val(fix_image_subpath),
+          path(mov_image, stageAs: 'mov/*'),
+          val(mov_image_subpath),
+          path(fix_mask, stageAs: 'fixmask/*'),
+          val(fix_mask_subpath),
+          path(mov_mask, stageAs: 'movmask/*'),
+          val(mov_mask_subpath),
+          val(affine_dir, stageAs: 'global_affine/*'), // this is the global affine location
           val(affine_transform_name), // global affine file name
           val(steps),
           path(output_dir),
-          val(transform_name), val(transform_subpath),
-          val(inv_transform_name), val(inv_transform_subpath),
+          val(transform_name),
+          val(transform_subpath),
+          val(inv_transform_name),
+          val(inv_transform_subpath),
           val(alignment_name) // alignment name
 
     tuple val(dask_scheduler),
@@ -61,8 +67,8 @@ process BIGSTREAM_LOCAL_ALIGN {
     python /app/bigstream/scripts/main_align_pipeline.py \
         --fixed-local ${fix_image} ${fix_image_subpath_arg} \
         --moving-local ${mov_image} ${mov_image_subpath_arg} \
-        ${fix_mask_arg} ${fix_mask_supath_arg} \
-        ${mov_mask_arg} ${mov_mask_supath_arg} \
+        ${fix_mask_arg} ${fix_mask_subpath_arg} \
+        ${mov_mask_arg} ${mov_mask_subpath_arg} \
         ${affine_dir_arg} \
         ${affine_transform_name_arg} \
         ${steps_arg} \
