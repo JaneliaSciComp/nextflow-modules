@@ -208,7 +208,7 @@ workflow DASK_START {
     meta_and_files       // channel: [val(meta), files...]
     distributed          // bool: if true create distributed cluster
     dask_work_dir        // dask work directory
-    dask_workers         // int: number of total workers in the cluster
+    dask_workers_input   // int: number of total workers in the cluster
     required_workers     // int: number of required workers in the cluster
     dask_worker_cpus     // int: number of cores per worker
     dask_worker_mem_db   // int: worker memory in GB
@@ -226,7 +226,16 @@ workflow DASK_START {
         DASK_WAITFORMANAGER(dask_prepare_result)
 
         // prepare inputs for dask workers
-        def dask_workers_list = 1..dask_workers
+        def dask_workers = dask_workers_input // this is needed because nf complains that dask_workers is already defined
+        def dask_workers_list
+        if ("${dask_workers}".isNumber()) {
+            dask_workers_list = Channel.fromList(1..dask_workers)
+        } else {
+            dask_workers_list = dask_workers
+            | flatMap { nworkers ->
+                1..nworkers
+            }
+        }
         def dask_workers_input = DASK_WAITFORMANAGER.out.cluster_info
         | join(meta_and_files, by: 0)
         | combine(dask_workers_list)
