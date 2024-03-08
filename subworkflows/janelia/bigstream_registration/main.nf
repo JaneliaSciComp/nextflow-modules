@@ -63,7 +63,7 @@ workflow BIGSTREAM_REGISTRATION {
             global_transform_name,
             global_align_name,
         ]
-        log.debug "Prepare global alignment: $it -> $r"
+        log.info "Prepare global alignment: $it -> $r"
         return r
     }
 
@@ -74,7 +74,7 @@ workflow BIGSTREAM_REGISTRATION {
     )
 
     global_align_results.subscribe {
-        log.debug "Completed global alignment -> $it"
+        log.info "Completed global alignment -> $it"
     }
 
     def cluster_input = registration_input
@@ -191,7 +191,7 @@ workflow BIGSTREAM_REGISTRATION {
             cluster_context.scheduler_address,
             dask_config,
         ]
-        log.debug "Prepare local alignment: $it -> $data, $cluster"
+        log.info "Prepare local alignment: $it -> $data, $cluster"
         data: data
         cluster: cluster
     }
@@ -204,7 +204,7 @@ workflow BIGSTREAM_REGISTRATION {
     // )
 
     // local_align_results.subscribe {
-    //     log.debug "Completed local alignment -> $it"
+    //     log.info "Completed local alignment -> $it"
     // }
 
     // if (do_not_destroy_cluster) {
@@ -227,7 +227,7 @@ workflow BIGSTREAM_REGISTRATION {
     // }
 
     emit:
-    // global = global_align_results 
+    global = global_align_results 
     // local = local_align_results
     cluster = cluster_info
 }
