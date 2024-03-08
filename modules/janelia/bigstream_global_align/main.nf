@@ -55,7 +55,7 @@ process BIGSTREAM_GLOBAL_ALIGN {
         ${steps_arg} \
         --global-output-dir ${output_dir} \
         ${transform_name_arg} \
-        ${aligned_name_arg}
+        ${aligned_name_arg} \
         ${args}
     """
 }

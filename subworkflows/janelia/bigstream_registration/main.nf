@@ -1,6 +1,7 @@
 include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream_global_align/main'
 include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream_local_align/main'
 include { DASK_START             } from '../dask_start/main'
+include { DASK_STOP              } from '../dask_stop/main'
 
 workflow BIGSTREAM_REGISTRATION {
     take:
@@ -78,6 +79,7 @@ workflow BIGSTREAM_REGISTRATION {
     }
 
     def cluster_input = registration_input
+    | join(global_align_results, by:0) // only start the cluster after global align is done
     | multiMap {
         def (meta,
              global_fix, global_fix_subpath, 
