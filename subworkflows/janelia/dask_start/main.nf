@@ -7,7 +7,8 @@ process DASK_PREPARE {
     path(dask_work_dir, stageAs: 'dask_work/*')
 
     output:
-    tuple val(meta), env(cluster_work_fullpath)
+    tuple val(meta), env(cluster_work_fullpath), emit: results
+    path(data),                                  emit: data
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,6 +28,7 @@ process DASK_STARTMANAGER {
 
     input:
     tuple val(meta), path(cluster_work_dir, stageAs: 'dask_work/*')
+    path(data)
 
     output:
     tuple val(meta), env(cluster_work_fullpath), emit: cluster_info
@@ -220,10 +222,10 @@ workflow DASK_START {
         def dask_prepare_result = DASK_PREPARE(meta_and_files, dask_work_dir)
 
         // start scheduler
-        DASK_STARTMANAGER(dask_prepare_result)
+        DASK_STARTMANAGER(dask_prepare_result.results, dask_prepare_result.data)
 
         // wait for manager to start
-        DASK_WAITFORMANAGER(dask_prepare_result)
+        DASK_WAITFORMANAGER(dask_prepare_result.results)
 
         // prepare inputs for dask workers
         def dask_workers = dask_workers_input // this is needed because nf complains that dask_workers is already defined

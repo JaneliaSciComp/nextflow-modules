@@ -47,9 +47,11 @@ process BIGSTREAM_GLOBAL_ALIGN {
     """
     output_fullpath=\$(readlink ${output_dir})
     mkdir -p \${output_fullpath}
+    fix_fullpath=\$(readlink ${fix_image})
+    mov_fullpath=\$(readlink ${mov_image})
     python /app/bigstream/scripts/main_align_pipeline.py \
-        --fixed-global ${fix_image} ${fix_image_subpath_arg} \
-        --moving-global ${mov_image} ${mov_image_subpath_arg} \
+        --fixed-global \${fix_fullpath} ${fix_image_subpath_arg} \
+        --moving-global \${mov_fullpath} ${mov_image_subpath_arg} \
         ${fix_mask_arg} ${fix_mask_subpath_arg} \
         ${mov_mask_arg} ${mov_mask_subpath_arg} \
         ${steps_arg} \

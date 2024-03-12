@@ -1,5 +1,5 @@
 array:
-  chunk-size: 512 MiB
+  chunk-size: 128 MiB
   rechunk:
     method: tasks
 
@@ -11,14 +11,14 @@ distributed:
 
   comm:
     retry:
-      count: 10
+      count: 3
 
     timeouts:
-      connect: 600s
+      connect: 120s
 
   scheduler:
-    allowed-failures: 5 # default 3
-    pickle: False
+    allowed-failures: 3 # default 3
+    pickle: True
     worker-ttl: 120s # default 5min
     unknown-task-duration: 120s
 
@@ -29,7 +29,7 @@ distributed:
       lease-validation-interval: 300s
 
   worker:
-    use-file-locking: False
+    use-file-locking: True
 
     lifetime:
       stagger: "5 minutes"

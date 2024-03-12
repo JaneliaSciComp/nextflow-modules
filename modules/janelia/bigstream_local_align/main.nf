@@ -46,9 +46,9 @@ process BIGSTREAM_LOCAL_ALIGN {
     def args = task.ext.args ?: ''
     def fix_image_subpath_arg = fix_image_subpath ? "--fixed-local-subpath ${fix_image_subpath}" : ''
     def mov_image_subpath_arg = mov_image_subpath ? "--moving-local-subpath ${mov_image_subpath}" : ''
-    def fix_mask_arg = fix_mask ? "--fixed-local-mask ${fix_mask}" : ''
+    def fix_mask_arg = fix_mask ? "--fixed-local-mask \$(readlink ${fix_mask})" : ''
     def fix_mask_subpath_arg = fix_mask && fix_mask_subpath ? "--fixed-local-mask-subpath ${fix_mask_subpath}" : ''
-    def mov_mask_arg = mov_mask ? "--moving-local-mask ${mov_mask}" : ''
+    def mov_mask_arg = mov_mask ? "--moving-local-mask \$(readlink ${mov_mask})" : ''
     def mov_mask_subpath_arg = mov_mask && mov_mask_subpath ? "--moving-local-mask-subpath ${mov_mask_subpath}" : ''
     def affine_dir_arg = affine_dir ? "--global-output-dir ${affine_dir}" : ''
     def affine_transform_name_arg = affine_transform_name ? "--global-transform-name ${affine_transform_name}" : ''
@@ -64,9 +64,11 @@ process BIGSTREAM_LOCAL_ALIGN {
     """
     output_fullpath=\$(readlink ${output_dir})
     mkdir -p \${output_fullpath}
+    fix_fullpath=\$(readlink ${fix_image})
+    mov_fullpath=\$(readlink ${mov_image})
     python /app/bigstream/scripts/main_align_pipeline.py \
-        --fixed-local ${fix_image} ${fix_image_subpath_arg} \
-        --moving-local ${mov_image} ${mov_image_subpath_arg} \
+        --fixed-local \${fix_fullpath} ${fix_image_subpath_arg} \
+        --moving-local \${mov_fullpath} ${mov_image_subpath_arg} \
         ${fix_mask_arg} ${fix_mask_subpath_arg} \
         ${mov_mask_arg} ${mov_mask_subpath_arg} \
         ${affine_dir_arg} \
