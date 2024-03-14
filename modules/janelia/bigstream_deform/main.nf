@@ -5,10 +5,8 @@ process BIGSTREAM_DEFORM {
 
     input:
     tuple val(meta),
-          path(fix_image),
-          val(fix_image_subpath),
-          path(mov_image),
-          val(mov_image_subpath),
+          path(fix_image), val(fix_image_subpath),
+          path(mov_image), val(mov_image_subpath),
           path(affine_transforms), // one or more affine transformations (paths to the corresponding affine.mat)
           path(deform_dir), // location of the displacement vector
           val(deform_subpath), // displacement vector subpath
@@ -32,7 +30,16 @@ process BIGSTREAM_DEFORM {
     def args = task.ext.args ?: ''
     def fix_image_subpath_arg = fix_image_subpath ? "--fixed-subpath ${fix_image_subpath}" : ''
     def mov_image_subpath_arg = mov_image_subpath ? "--moving-subpath ${mov_image_subpath}" : ''
-    def affine_transforms_arg = affine_transforms ? "--affine-transformations ${affine_transform_name}"
+    def affine_transforms_arg
+    if (affine_transforms) {
+      if (affine_transforms instanceof Collection) {
+            affine_transforms_arg = "--affine-transformations $affine_transforms.join(',')"
+      } else {
+            affine_transforms_arg = "--affine-transformations ${affine_transforms}"
+      }
+    } else {
+      affine_transforms_arg = ''
+    }
     def local_transform_arg = deform_dir ? "--local-transform ${deform_dir}" : ''
     def local_transform_subpath_arg = deform_dir && deform_subpath ? "--local-transform-subpath ${deform_subpath}" : ''
     def output_subpath_arg = output_subpath ? "--output-subpath ${output_subpath}" : ''
@@ -52,5 +59,4 @@ process BIGSTREAM_DEFORM {
         ${dask_config_arg} \
         ${args}
     """
-
 }

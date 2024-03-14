@@ -5,14 +5,10 @@ process BIGSTREAM_LOCAL_ALIGN {
 
     input:
     tuple val(meta),
-          path(fix_image, stageAs: 'fix/*'),
-          val(fix_image_subpath),
-          path(mov_image, stageAs: 'mov/*'),
-          val(mov_image_subpath),
-          path(fix_mask, stageAs: 'fixmask/*'),
-          val(fix_mask_subpath),
-          path(mov_mask, stageAs: 'movmask/*'),
-          val(mov_mask_subpath),
+          path(fix_image, stageAs: 'fix/*'), val(fix_image_subpath),
+          path(mov_image, stageAs: 'mov/*'), val(mov_image_subpath),
+          path(fix_mask, stageAs: 'fixmask/*'), val(fix_mask_subpath),
+          path(mov_mask, stageAs: 'movmask/*'), val(mov_mask_subpath),
           path(affine_dir, stageAs: 'global_affine/*'), // this is the global affine location
           val(affine_transform_name), // global affine file name
           val(steps),
@@ -32,12 +28,14 @@ process BIGSTREAM_LOCAL_ALIGN {
 
     output:
     tuple val(meta),
-          path(fix_image), val(fix_image_subpath),
-          path(mov_image), val(mov_image_subpath),
-          path(output_dir), 
-          val(transform_name),
-          val(inv_transform_name),
-          val(alignment_name)                    , emit: results
+          env(fix_fullpath), val(fix_image_subpath),
+          env(mov_fullpath), val(mov_image_subpath),
+          env(affine_fullpath),
+          val(affine_transform_name),
+          env(output_fullpath),
+          val(transform_name), val(transform_subpath_output),
+          val(inv_transform_name), val(inv_transform_subpath_output),
+          val(alignment_name)                                       , emit: results
 
     when:
     task.ext.when == null || task.ext.when
@@ -54,18 +52,28 @@ process BIGSTREAM_LOCAL_ALIGN {
     def affine_transform_name_arg = affine_transform_name ? "--global-transform-name ${affine_transform_name}" : ''
     def steps_arg = steps ? "--local-registration-steps ${steps}" : ''
     def transform_name_arg = transform_name ? "--local-transform-name ${transform_name}" : ''
-    def transform_subpath_arg = transform_subpath ? "--local-transform-subpath ${transform_subpath}" : ''
+    def transform_subpath_param = transform_subpath
+    def transform_subpath_arg = transform_subpath_param ? "--local-transform-subpath ${transform_subpath_param}" : ''
     def inv_transform_name_arg = inv_transform_name ? "--local-inv-transform-name ${inv_transform_name}" : ''
-    def inv_transform_subpath_arg = inv_transform_subpath ? "--local-inv-transform-subpath ${inv_transform_subpath}" : ''
+    def inv_transform_subpath_param = inv_transform_subpath
+    def inv_transform_subpath_arg = inv_transform_subpath_param ? "--local-inv-transform-subpath ${inv_transform_subpath_param}" : ''
     def aligned_name_arg = alignment_name ? "--local-aligned-name ${alignment_name}" : ''
     def dask_scheduler_arg = dask_scheduler ? "--dask-scheduler ${dask_scheduler}" : ''
     def dask_config_arg = dask_scheduler && dask_config ? "--dask-config ${dask_config}" : ''
+
+    transform_subpath_output = transform_subpath_param ?: mov_image_subpath
+    inv_transform_subpath_output = inv_transform_subpath_param ?: transform_subpath_output
 
     """
     output_fullpath=\$(readlink ${output_dir})
     mkdir -p \${output_fullpath}
     fix_fullpath=\$(readlink ${fix_image})
     mov_fullpath=\$(readlink ${mov_image})
+    if [[ "${affine_dir}" != "" ]] ; then
+        affine_fullpath=\$(readlink ${affine_dir})
+    else
+        affine_fullpath=
+    fi
     python /app/bigstream/scripts/main_align_pipeline.py \
         --fixed-local \${fix_fullpath} ${fix_image_subpath_arg} \
         --moving-local \${mov_fullpath} ${mov_image_subpath_arg} \

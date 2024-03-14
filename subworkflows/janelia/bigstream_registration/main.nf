@@ -1,3 +1,4 @@
+include { BIGSTREAM_DEFORM       } from '../../../modules/janelia/bigstream_deform/main'
 include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream_global_align/main'
 include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream_local_align/main'
 include { DASK_START             } from '../dask_start/main'
@@ -26,6 +27,7 @@ workflow BIGSTREAM_REGISTRATION {
                        //  local_inv_transform_name
                        //  local_inv_transform_subpath
                        //  local_align_name
+                       //  additional_deformations - list of tuples where each tuple has: [image_path, image_subpath, deformed_image_output_path]
                        //  with_dask
                        //  dask_work_dir
                        //  dask_config
@@ -38,7 +40,6 @@ workflow BIGSTREAM_REGISTRATION {
     global_align_mem_gb
     local_align_cpus
     local_align_mem_gb
-    do_not_destroy_cluster  // if this is true the caller is responsible for destroying the cluster
 
     main:    
     def global_align_input = registration_input
@@ -80,10 +81,15 @@ workflow BIGSTREAM_REGISTRATION {
         log.info "Completed global alignment -> $it"
     }
 
-    def cluster_input = registration_input
-    | join(global_align_results, by:0) // only start the cluster after global align is done
+    def cluster_input = global_align_results
+    | join(registration_input, by:0) // only start the cluster after global align is done
     | multiMap {
         def (meta,
+             global_results_fix, global_results_fix_subpath,
+             global_results_mov, global_results_mov_subpath,
+             global_results_output,
+             global_results_transform,
+             global_results_alignment,
              global_fix, global_fix_subpath, 
              global_mov, global_mov_subpath,
              global_fix_mask, global_fix_mask_subpath,
@@ -103,6 +109,7 @@ workflow BIGSTREAM_REGISTRATION {
              local_inv_transform_name,
              local_inv_transform_subpath,
              local_align_name,
+             additional_deformations,
              with_dask,
              dask_work_dir,
              dask_config,
@@ -112,12 +119,32 @@ workflow BIGSTREAM_REGISTRATION {
              dask_worker_mem_gb
              ) = it
 
+        def additional_deformation_data
+        if (additional_deformations) {
+            additional_deformation_data = additional_deformations
+                .collect {
+                    def (image_path, image_subpath, deformed_image_output_path) = it
+                    log.info "Deform input: ${image_path}, ${image_subpath} -> ${deformed_image_output_path}"
+                    [
+                        image_path,
+                        deformed_image_output_path.parent, // use the parent here because the output dir may not exist yet
+                    ]
+                }
+                .flatten()
+        } else {
+            additional_deformation_data = []
+        }
+
         def cluster_files =
             [ 
-                global_output, local_fix, local_mov, local_output
+                file(global_results_output),
+                local_fix,
+                local_mov,
+                local_output.parent, // local_output may not exist yet so we use the parent
             ] + 
             (local_fix_mask ? [local_fix_mask] :[]) +
-            (local_mov_mask ? [local_mov_mask] :[])
+            (local_mov_mask ? [local_mov_mask] :[]) +
+            additional_deformation_data
 
         def cluster_files_set = cluster_files as Set
         log.info "Cluster files: ${cluster_files_set}"
@@ -150,10 +177,16 @@ workflow BIGSTREAM_REGISTRATION {
     )
 
     def local_align_input = cluster_info
+    | join(global_align_results, by: 0)
     | join (registration_input, by: 0)
     | multiMap {
         def (meta,
              cluster_context,
+             global_results_fix, global_results_fix_subpath,
+             global_results_mov, global_results_mov_subpath,
+             global_results_output,
+             global_results_transform,
+             global_results_alignment,
              global_fix, global_fix_subpath, 
              global_mov, global_mov_subpath,
              global_fix_mask, global_fix_mask_subpath,
@@ -173,6 +206,7 @@ workflow BIGSTREAM_REGISTRATION {
              local_inv_transform_name,
              local_inv_transform_subpath,
              local_align_name,
+             additional_deformations,
              with_dask,
              dask_work_dir,
              dask_config
@@ -181,12 +215,10 @@ workflow BIGSTREAM_REGISTRATION {
             meta,
             local_fix, local_fix_subpath,
             local_mov, local_mov_subpath,
-            local_fix_mask ?: [],
-            local_fix_mask_subpath,
-            local_mov_mask ?: [],
-            local_mov_mask_subpath,
-            global_output,
-            global_transform_name,
+            local_fix_mask ?: [], local_fix_mask_subpath,
+            local_mov_mask ?: [], local_mov_mask_subpath,
+            global_results_output,
+            global_results_transform,
             local_steps,
             local_output,
             local_transform_name,
@@ -215,23 +247,91 @@ workflow BIGSTREAM_REGISTRATION {
         log.info "Completed local alignment -> $it"
     }
 
-    if (do_not_destroy_cluster) {
-        cluster = cluster_info
-    } else {
-        // destroy the cluster when the local alignment is complete
-        cluster = cluster_info
-        | join(local_align_results, by: 0)
-        | map {
-            def (meta, cluster_context) = it
-            [ meta, cluster_context ]
+    def additional_deformations_input = cluster_info
+    | join(local_align_results, by: 0)
+    | join(registration_input, by: 0)
+    | flatMap {
+        def (meta,
+             cluster_context,
+             local_results_fix, local_results_fix_subpath,
+             local_results_mov, local_results_mov_subpath,
+             local_results_affine_dir,
+             local_results_affine_transform,
+             local_results_output,
+             local_results_deform_name,
+             local_results_deform_subpath,
+             local_results_inv_deform_name,
+             local_results_inv_deform_subpath,
+             local_results_align_name,
+             global_fix, global_fix_subpath, 
+             global_mov, global_mov_subpath,
+             global_fix_mask, global_fix_mask_subpath,
+             global_mov_mask, global_mov_mask_subpath,
+             global_steps,
+             global_output,
+             global_transform_name,
+             global_align_name,
+             local_fix, local_fix_subpath,
+             local_mov, local_mov_subpath,
+             local_fix_mask, local_fix_mask_subpath,
+             local_mov_mask, local_mov_mask_subpath,
+             local_steps,
+             local_output,
+             local_transform_name,
+             local_transform_subpath,
+             local_inv_transform_name,
+             local_inv_transform_subpath,
+             local_align_name,
+             additional_deformations,
+             with_dask,
+             dask_work_dir,
+             dask_config
+            ) = it
+
+        if (additional_deformations) {
+            additional_deformations.collect {
+                def (image_path, image_subpath, deformed_image_output_path) = it
+                [
+                    meta,
+                    local_fix, local_fix_subpath,
+                    image_path, image_subpath,
+                    file("${local_results_affine_dir}/${local_results_affine_transform}"),
+                    file("${local_results_output}/${local_results_deform_name}"), local_results_deform_subpath,
+                    deformed_image_output_path, image_subpath,
+                    // cluster inputs
+                    cluster_context.scheduler_address, dask_config ?: [],
+                ]
+            }
+        } else {
+            []
         }
-        | DASK_STOP
-        | map {
-            def (meta, cluster_work_dir) = it
-            [
-                meta, [:],
-            ]
-        }
+    }
+
+    def additional_deformations_results = BIGSTREAM_DEFORM(
+        additional_deformations_input.map { it[0..9]},
+        additional_deformations_input.map { it[10..11]},
+        local_align_cpus,
+        local_align_mem_gb,
+    )
+
+    additional_deformations_results.subscribe {
+        log.info "Completed additional deformations -> $it"
+    }
+
+    // destroy the cluster
+    cluster = cluster_info
+    | join(additional_deformations_results.concat(local_align_results), by: 0)
+    | groupTuple(by: 0)
+    | map {
+        def (meta, cluster_context) = it
+        [ meta, cluster_context ]
+    }
+    | DASK_STOP
+    | map {
+        def (meta, cluster_work_dir) = it
+        [
+            meta, [:],
+        ]
     }
 
     emit:

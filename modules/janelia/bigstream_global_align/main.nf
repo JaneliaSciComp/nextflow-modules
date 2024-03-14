@@ -22,11 +22,11 @@ process BIGSTREAM_GLOBAL_ALIGN {
 
     output:
     tuple val(meta),
-          path(fix_image), val(fix_image_subpath),
-          path(mov_image), val(mov_image_subpath),
-          path(output_dir), 
-          val(transform_name),
-          val(alignment_name)                    , emit: results
+          env(fix_fullpath), val(fix_image_subpath),
+          env(mov_fullpath), val(mov_image_subpath),
+          env(output_fullpath),
+          val(transform_name_output),
+          val(alignment_name)                      , emit: results
 
     when:
     task.ext.when == null || task.ext.when
@@ -39,10 +39,12 @@ process BIGSTREAM_GLOBAL_ALIGN {
     def fix_mask_subpath_arg = fix_mask && fix_mask_subpath ? "--fixed-global-mask-subpath ${fix_mask_subpath}" : ''
     def mov_mask_arg = mov_mask ? "--moving-global-mask ${mov_mask}" : ''
     def mov_mask_subpath_arg = mov_mask && mov_mask_subpath ? "--moving-global-mask-subpath ${mov_mask_subpath}" : ''
-
     def steps_arg = steps ? "--global-registration-steps ${steps}" : ''
-    def transform_name_arg = transform_name ? "--global-transform-name ${transform_name}" : ''
+    def transform_name_param = transform_name
+    def transform_name_arg = transform_name_param ? "--global-transform-name ${transform_name_param}" : ''
     def aligned_name_arg = alignment_name ? "--global-aligned-name ${alignment_name}" : ''
+
+    transform_name_output = transform_name_param ?: 'affine-transform.mat'
 
     """
     output_fullpath=\$(readlink ${output_dir})
