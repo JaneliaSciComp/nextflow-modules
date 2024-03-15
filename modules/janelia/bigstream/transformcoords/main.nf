@@ -1,4 +1,4 @@
-process BIGSTREAM_TRANSFORM_COORDS {
+process BIGSTREAM_TRANSFORMCOORDS {
     container { task.ext.container ?: 'janeliascicomp/bigstream:1.2.9-dask2023.10.1-py11' }
     cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"

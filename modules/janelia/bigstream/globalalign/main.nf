@@ -1,4 +1,4 @@
-process BIGSTREAM_GLOBAL_ALIGN {
+process BIGSTREAM_GLOBALALIGN {
     container { task.ext.container ?: 'janeliascicomp/bigstream:1.2.9-dask2023.10.1-py11' }
     cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"

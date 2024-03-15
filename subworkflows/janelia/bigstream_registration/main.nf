@@ -1,8 +1,8 @@
-include { BIGSTREAM_DEFORM       } from '../../../modules/janelia/bigstream/deform/main'
-include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream/global-align/main'
-include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream/local-align/main'
-include { DASK_START             } from '../dask_start/main'
-include { DASK_STOP              } from '../dask_stop/main'
+include { BIGSTREAM_DEFORM      } from '../../../modules/janelia/bigstream/deform/main'
+include { BIGSTREAM_GLOBALALIGN } from '../../../modules/janelia/bigstream/globalalign/main'
+include { BIGSTREAM_LOCALALIGN  } from '../../../modules/janelia/bigstream/localalign/main'
+include { DASK_START            } from '../dask_start/main'
+include { DASK_STOP             } from '../dask_stop/main'
 
 workflow BIGSTREAM_REGISTRATION {
     take:
@@ -71,7 +71,7 @@ workflow BIGSTREAM_REGISTRATION {
         return r
     }
 
-    def global_align_results = BIGSTREAM_GLOBAL_ALIGN(
+    def global_align_results = BIGSTREAM_GLOBALALIGN(
         global_align_input,
         global_align_cpus,
         global_align_mem_gb,
@@ -236,7 +236,7 @@ workflow BIGSTREAM_REGISTRATION {
         cluster: cluster
     }
 
-    def local_align_results = BIGSTREAM_LOCAL_ALIGN(
+    def local_align_results = BIGSTREAM_LOCALALIGN(
         local_align_input.data,
         local_align_input.cluster,
         local_align_cpus,
