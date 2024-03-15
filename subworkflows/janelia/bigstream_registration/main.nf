@@ -1,6 +1,6 @@
-include { BIGSTREAM_DEFORM       } from '../../../modules/janelia/bigstream_deform/main'
-include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream_global_align/main'
-include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream_local_align/main'
+include { BIGSTREAM_DEFORM       } from '../../../modules/janelia/bigstream/deform/main'
+include { BIGSTREAM_GLOBAL_ALIGN } from '../../../modules/janelia/bigstream/global-align/main'
+include { BIGSTREAM_LOCAL_ALIGN  } from '../../../modules/janelia/bigstream/local-align/main'
 include { DASK_START             } from '../dask_start/main'
 include { DASK_STOP              } from '../dask_stop/main'
 
