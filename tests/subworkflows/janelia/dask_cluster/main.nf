@@ -33,8 +33,10 @@ workflow test_start_stop_dask {
 
 workflow test_two_dask_clusters {
     def test_dir = file("output/dask/dummy")
-    test_dir.mkdirs()
     def test_data_dir = file("output/dask/dummy/data")
+    test_data_dir.mkdirs()
+    // create a small file in the test_data_dir
+    new File("${test_data_dir}/test.txt").text = "Test"
 
     def dask_cluster_input = [
         [
