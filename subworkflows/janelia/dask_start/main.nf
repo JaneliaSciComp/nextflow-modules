@@ -311,7 +311,6 @@ workflow DASK_START {
 }
 
 def as_value_channel(v) {
-    log.info "!!!!!!!!!! $v"
     if (!v.toString().contains("Dataflow")) {
         Channel.value(v)
     } else if (!v.toString().contains("value")) {
