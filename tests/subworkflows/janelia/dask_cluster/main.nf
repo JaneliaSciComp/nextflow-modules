@@ -9,10 +9,11 @@ workflow test_start_stop_dask {
         [/* empty data paths */],
     ]
 
+    print "!!!! ${params.dask_work_dir}"
     def dask_cluster_info = DASK_START(
         Channel.of(dask_cluster_input),
         params.distributed,
-        file(params.dask_work_dir),
+        params.dask_work_dir instanceof String && params.dask_work_dir ? file(params.dask_work_dir) : '',
         Channel.of(3), // dask workers
         Channel.value(2), // required workers
         1, // worker cores
