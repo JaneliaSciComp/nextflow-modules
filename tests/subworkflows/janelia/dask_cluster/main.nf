@@ -13,8 +13,8 @@ workflow test_start_stop_dask {
         Channel.of(dask_cluster_input),
         params.distributed,
         file(params.dask_work_dir),
-        3, // dask workers
-        2, // required workers
+        Channel.of(3), // dask workers
+        Channel.value(2), // required workers
         1, // worker cores
         1.5, // worker mem
     )

@@ -217,12 +217,12 @@ workflow DASK_START {
 
     main:
     def dask_clusters = meta_and_files
-    | combine(as_channel(distributed))
-    | combine(as_channel(dask_work_dir))
-    | combine(as_channel(total_workers))
-    | combine(as_channel(required_workers))
-    | combine(as_channel(dask_worker_cpus))
-    | combine(as_channel(dask_worker_mem_db))
+    | combine(as_value_channel(distributed))
+    | combine(as_value_channel(dask_work_dir))
+    | combine(as_value_channel(total_workers))
+    | combine(as_value_channel(required_workers))
+    | combine(as_value_channel(dask_worker_cpus))
+    | combine(as_value_channel(dask_worker_mem_db))
     | branch {
         def (meta, data, distributed_flag, work_dir, n_workers, min_workers, cpus, mem_gb) = it
         log.info "Prepare cluster input: $it"
@@ -310,10 +310,10 @@ workflow DASK_START {
     done = started_clusters.concat (not_started_clusters) // [ meta, dask_context ]
 }
 
-def as_channel(v) {
+def as_value_channel(v) {
     if (!v.toString().contains("Dataflow")) {
         Channel.value(v)
     } else {
-        v
+        v.first()
     }
 }
