@@ -9,7 +9,6 @@ workflow test_start_stop_dask {
         [/* empty data paths */],
     ]
 
-    print "!!!! ${params.dask_work_dir}"
     def dask_cluster_info = DASK_START(
         Channel.of(dask_cluster_input),
         params.distributed,
