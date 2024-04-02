@@ -1,0 +1,7 @@
+- name: distributed cellpose with dask
+  command: nextflow run ./tests/modules/janelia/cellpose/main.nf -entry test_cellpose -c ./tests/config/nextflow.config -c ./tests/modules/janelia/cellpose/nextflow.config
+  tags:
+    - cellpose
+    - dask
+  files:
+    - path: output/dask/versions.yml
