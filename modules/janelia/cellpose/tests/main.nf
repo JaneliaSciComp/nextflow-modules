@@ -12,8 +12,20 @@ process UNTAR_RAW_INPUT {
     """
 }
 
+workflow test_cellpose_standalone {
+    test_cellpose(
+        Channel.of(
+            file(params.test_data['stitched_images']['n5']['r1_n5'])
+        )
+    )
+}
+
 workflow test_cellpose {
-    def cellpose_test_data = UNTAR_RAW_INPUT (file(params.test_data['stitched_images']['n5']['r1_n5'])) |
+    take:
+    input_test_data
+
+    main:
+    def cellpose_test_data = UNTAR_RAW_INPUT (input_test_data) |
     map { input_image ->
         def cellpose_models_path = params.cellpose_models_dir
             ? file(params.cellpose_models_dir) : []
