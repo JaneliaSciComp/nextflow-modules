@@ -24,11 +24,11 @@ workflow test_distributed_cellpose_with_dask {
         // they get mounted in the dask workers
         def path_inputs = [ 
             input_image,
-            file(params.output_image_dir),
+            file(params.output_image_dir).parent, // pass the parent for the output as the output may not exist
         ] +
         (params.cellpose_work_dir ? [ file(params.cellpose_work_dir) ] : []) +
         (params.dask_config ? [ file(params.dask_config) ] : []) +
-        (params.cellpose_models_dir ? [ file(params.cellpose_models_dir) ] : [])
+        (params.cellpose_models_dir ? [ file(params.cellpose_models_dir).parent ] : [])
         [
             [
                 id: 'test_distributed_cellpose_with_dask',
@@ -45,7 +45,7 @@ workflow test_distributed_cellpose_with_dask {
         params.cellpose_workers,
         params.cellpose_required_workers,
         params.cellpose_worker_cpus,
-        params.cellpose_worker_mem_gb
+        params.cellpose_worker_mem_gb,
     )
 
     dask_cluster.subscribe {
