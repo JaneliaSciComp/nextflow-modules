@@ -8,11 +8,11 @@ process UNTAR_RAW_INPUT {
     clusterOptions { task.ext.cluster_opts }
 
     input: path(tarfile, stageAs:'input-data/*')
-    output: path('input-data/*.n5')
+    output: path('*.n5')
 
     script:
     """
-    tar -xvf $tarfile -C input-data
+    tar -xvf $tarfile
     """
 }
 
