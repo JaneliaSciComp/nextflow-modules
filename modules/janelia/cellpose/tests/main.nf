@@ -2,6 +2,7 @@ include { CELLPOSE   } from '../../../../modules/janelia/cellpose/main'
 
 process UNTAR_RAW_INPUT {
     container { task.ext.container }
+    clusterOptions { task.ext.cluster_opts }
 
     input: path(tarfile, stageAs:'input-data/*')
     output: path('input-data/*.n5')
