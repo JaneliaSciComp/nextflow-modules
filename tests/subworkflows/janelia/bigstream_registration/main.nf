@@ -44,6 +44,7 @@ workflow test_registration_with_dask {
 
     BIGSTREAM_REGISTRATION(
         registration_input,
+        params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
         params.local_align_cpus,
@@ -99,6 +100,7 @@ workflow test_registration_with_additional_deformations {
 
     BIGSTREAM_REGISTRATION(
         registration_input,
+        params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
         params.local_align_cpus,
@@ -154,6 +156,7 @@ workflow test_registration_without_warp_but_with_additional_deformations {
 
     BIGSTREAM_REGISTRATION(
         registration_input,
+        params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
         params.local_align_cpus,
