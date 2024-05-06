@@ -57,18 +57,16 @@ workflow BIGSTREAM_REGISTRATION {
             ) = it // there's a lot more in the input but we only look at what we are interested here
         def r = [
             meta,
-            global_fix, global_fix_subpath,
-            global_mov, global_mov_subpath,
-            global_fix_mask ?: [],
-            global_fix_mask_subpath,
-            global_mov_mask ?: [], 
-            global_mov_mask_subpath,
+            global_fix ?: [], global_fix_subpath,
+            global_mov ?: [], global_mov_subpath,
+            global_fix_mask ?: [], global_fix_mask_subpath,
+            global_mov_mask ?: [], global_mov_mask_subpath,
             global_steps,
-            global_output,
+            global_output ?: [],
             global_transform_name,
             global_align_name,
         ]
-        log.debug "Prepare global alignment: $it -> $r"
+        log.info "Prepare global alignment: $it -> $r"
         return r
     }
 
@@ -140,12 +138,11 @@ workflow BIGSTREAM_REGISTRATION {
         }
 
         def cluster_files =
-            [ 
-                file(global_results_output),
-                local_fix,
-                local_mov,
-                file(local_output).parent, // local_output may not exist yet so we use the parent
-            ] +
+            (local_fix ? [local_fix] :[]) +
+            (local_mov ? [local_mov] :[]) +
+            (global_results_output ? [global_results_output] :[]) +
+            // local_output may not exist yet so we use the parent
+            (local_output ? [file(local_output).parent] : []) +
             (local_fix_mask ? [local_fix_mask] :[]) +
             (local_mov_mask ? [local_mov_mask] :[]) +
             additional_deformation_data
@@ -225,10 +222,10 @@ workflow BIGSTREAM_REGISTRATION {
             local_mov, local_mov_subpath,
             local_fix_mask ?: [], local_fix_mask_subpath,
             local_mov_mask ?: [], local_mov_mask_subpath,
-            global_results_output,
+            global_results_output ?: [],
             global_results_transform,
             local_steps,
-            local_output,
+            local_output ?: [],
             local_transform_name,
             local_transform_subpath,
             local_inv_transform_name,
