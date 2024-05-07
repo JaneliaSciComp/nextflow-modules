@@ -57,14 +57,14 @@ process BIGSTREAM_GLOBALALIGN {
     if [[ "${fix_image}" != "" ]];  then
         fix_fullpath=\$(readlink -m ${fix_image})
         echo "Fix volume full path: \${fix_fullpath}"
-    else:
+    else
         fix_fullpath=
         echo "No fix volume provided"
     fi
     if [[ "${mov_image}" != "" ]];  then
         mov_fullpath=\$(readlink -m ${mov_image})
         echo "Moving volume full path: \${mov_fullpath}"
-    else:
+    else
         mov_fullpath=
         echo "No moving volume provided"
     fi

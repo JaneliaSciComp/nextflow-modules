@@ -27,7 +27,9 @@ workflow BIGSTREAM_REGISTRATION {
                        //  local_inv_transform_name
                        //  local_inv_transform_subpath
                        //  local_align_name
-                       //  additional_deformations - list of tuples where each tuple has: [image_path, image_subpath, deformed_image_output_path]
+                       //  additional_deformations - list of tuples where each tuple has: [fix_image_path, fix_image_subpath, fix_image_scale,
+                       //                                                                  image_path, image_subpath, image_scale,
+                       //                                                                  deformed_image_output_path]
                        //  with_dask
                        //  dask_work_dir
                        //  dask_config
@@ -125,12 +127,13 @@ workflow BIGSTREAM_REGISTRATION {
         if (additional_deformations) {
             additional_deformation_data = additional_deformations
                 .collect {
-                    def (image_path, image_subpath, deformed_image_output_path) = it
-                    log.info "Deform input: ${image_path}, ${image_subpath} -> ${deformed_image_output_path}"
-                    [
-                        image_path,
-                        file(deformed_image_output_path).parent, // use the parent here because the output dir may not exist yet
-                    ]
+                    def (ref_image_path, ref_image_subpath, ref_image_scale,
+                         image_path, image_subpath, image_scale,
+                         deformed_image_output_path) = it
+                    log.info "Deform input: ${ref_image_path}, ${ref_image_subpath}, ${ref_image_scale}, ${image_path}, ${image_subpath}, ${image_scale} -> ${deformed_image_output_path}"
+                    return (ref_image_path ? [ref_image_path] : []) +
+                           (image_path ? [image_path] : []) +
+                           (deformed_image_output_path ? [file(deformed_image_output_path).parent] : [])
                 }
                 .flatten()
         } else {
@@ -218,8 +221,8 @@ workflow BIGSTREAM_REGISTRATION {
             ) = it
         def data = [
             meta,
-            local_fix, local_fix_subpath,
-            local_mov, local_mov_subpath,
+            local_fix ?: [], local_fix_subpath,
+            local_mov ?: [], local_mov_subpath,
             local_fix_mask ?: [], local_fix_mask_subpath,
             local_mov_mask ?: [], local_mov_mask_subpath,
             global_results_output ?: [],
@@ -304,14 +307,16 @@ workflow BIGSTREAM_REGISTRATION {
 
         if (additional_deformations) {
             additional_deformations.collect {
-                def (image_path, image_subpath, deformed_image_output_path) = it
+                def (ref_image_path, ref_image_subpath, ref_image_scale,
+                     image_path, image_subpath, image_scale,
+                     warped_image_path) = it
                 def d = [
                     meta,
-                    local_fix, local_fix_subpath,
-                    image_path, image_subpath,
+                    ref_image_path, ref_image_subpath, ref_image_scale,
+                    image_path, image_subpath, image_scale,
                     file("${local_results_affine_dir}/${local_results_affine_transform}"),
                     file("${local_results_output}/${local_results_deform_name}"), local_results_deform_subpath,
-                    deformed_image_output_path, image_subpath,
+                    warped_image_path, image_subpath,
                     // cluster inputs
                     cluster_context.scheduler_address, dask_config ?: [],
                 ]
@@ -324,8 +329,8 @@ workflow BIGSTREAM_REGISTRATION {
     }
 
     def additional_deformations_results = BIGSTREAM_DEFORM(
-        additional_deformations_input.map { it[0..9]},
-        additional_deformations_input.map { it[10..11]},
+        additional_deformations_input.map { it[0..11]},
+        additional_deformations_input.map { it[12..13]},
         local_align_cpus,
         local_align_mem_gb,
     )
