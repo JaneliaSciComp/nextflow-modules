@@ -15,7 +15,7 @@ workflow test_registration_with_dask {
             params.global_steps,
             params.global_output ? file(params.global_output) : '',
             params.global_transform_name,
-            params.global_align_name,
+            params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.local_fix_mask ? file(params.local_fix_mask) : '', params.local_fix_mask_subpath,
@@ -26,7 +26,7 @@ workflow test_registration_with_dask {
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
-            params.local_align_name,
+            params.local_align_name, params.local_align_subpath,
             [], // additional deformations
             params.with_dask,
             params.dask_work_dir ? file(params.dask_work_dir) : '',
@@ -63,7 +63,7 @@ workflow test_global_registration_only {
             params.global_steps,
             params.global_output ? file(params.global_output) : '',
             params.global_transform_name,
-            params.global_align_name,
+            params.global_align_name, params.global_align_subpath,
             '', '', // local fix
             '', '', // local mov
             '', '', // local fix mask
@@ -72,7 +72,7 @@ workflow test_global_registration_only {
             '', // local output
             '', '', // local transform
             '', '', // local inverse transform
-            '', // local align
+            '', '', // local align
             [],
             params.with_dask,
             params.dask_work_dir ? file(params.dask_work_dir) : '',
@@ -109,7 +109,7 @@ workflow test_local_registration_only_with_dask {
             '', // no global steps
             '', // global output
             '', // global transform name,
-            '', // global align name,
+            '', '', // global align name,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.local_fix_mask ? file(params.local_fix_mask) : '', params.local_fix_mask_subpath,
@@ -120,7 +120,7 @@ workflow test_local_registration_only_with_dask {
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
-            params.local_align_name,
+            params.local_align_name, params.local_align_subpath,
             [],
             params.with_dask,
             params.dask_work_dir ? file(params.dask_work_dir) : '',
@@ -157,7 +157,7 @@ workflow test_registration_with_additional_deformations {
             params.global_steps,
             params.global_output ? file(params.global_output) : '',
             params.global_transform_name,
-            params.global_align_name,
+            params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.local_fix_mask ? file(params.local_fix_mask) : '',
@@ -170,12 +170,12 @@ workflow test_registration_with_additional_deformations {
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
-            params.local_align_name,
+            params.local_align_name, params.local_align_subpath,
             [
                 [
-                    file(params.local_mov), 
-                    "${params.additional_warped_channel}/${params.additional_warped_scale}",
-                    file("${params.local_output}/${params.local_align_name}"),
+                    file(params.local_fix), params.local_fix_subpath, '',
+                    file(params.local_mov), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
+                    file("${params.local_output}/${params.local_align_name}"), '',
                 ],
             ],
             params.with_dask,
@@ -213,7 +213,7 @@ workflow test_registration_without_warp_but_with_additional_deformations {
             params.global_steps,
             file(params.global_output),
             params.global_transform_name,
-            params.global_align_name,
+            params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.local_fix_mask ? file(params.local_fix_mask) : '',
@@ -226,12 +226,12 @@ workflow test_registration_without_warp_but_with_additional_deformations {
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
-            '',
+            '', '', // local align
             [
                 [
-                    file(params.local_mov), 
-                    "${params.additional_warped_channel}/${params.additional_warped_scale}",
-                    file("${params.local_output}/${params.local_align_name}"),
+                    file(params.local_fix), params.local_fix_subpath, '',
+                    file(params.local_mov), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
+                    file("${params.local_output}/${params.local_align_name}"), '',
                 ],
             ],
             params.with_dask,
