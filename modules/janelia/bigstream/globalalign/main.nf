@@ -1,5 +1,5 @@
 process BIGSTREAM_GLOBALALIGN {
-    container { task.ext.container ?: 'janeliascicomp/bigstream:1.3.0-dask2024.4.1-py11' }
+    container { task.ext.container ?: 'janeliascicomp/bigstream:1.3.1-dask2024.4.1-py11' }
     cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"
 
@@ -92,7 +92,7 @@ process BIGSTREAM_GLOBALALIGN {
         output_fullpath=
     fi
 
-    python /app/bigstream/scripts/main_align_pipeline.py \
+    python /app/bigstream/scripts/main_global_align_pipeline.py \
         ${fix_image_arg} ${fix_image_subpath_arg} \
         ${mov_image_arg} ${mov_image_subpath_arg} \
         ${fix_mask_arg} ${fix_mask_subpath_arg} \

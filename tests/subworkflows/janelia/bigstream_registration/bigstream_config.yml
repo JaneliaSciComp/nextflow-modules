@@ -23,27 +23,37 @@ ransac:
 
 global_align:
   affine:
+    initial_condition: CENTER
+    alignment_spacing: 4.0
     shrink_factors: [2]
-    smooth_sigmas: [2.5]
-    metric: MMI
-    metric_args: {}
+    smooth_sigmas: [2]
     optimizer: RSGD
     optimizer_args:
       learningRate: 0.25
       minStep: 0
-      numberOfIterations: 10
+      numberOfIterations: 100
 
 local_align:
   ransac:
     fix_spot_detection_kwargs:
-      blob_method: dog
+      blob_method: log
     mov_spot_detection_kwargs:
-      blob_method: dog
+      blob_method: log
+
+  affine:
+    alignment_spacing: 1.0
+    shrink_factors: [1]
+    smooth_sigmas: [0.25]
+    optimizer: RSGD
+    optimizer_args:
+      learningRate: 0.25
+      minStep: 0
+      numberOfIterations: 25
 
   deform:
     smooth_sigmas: [0.25]
-    metric: C
-    metric_args: {}
+    control_point_spacing: 50.0
+    control_point_levels: [1]
     optimizer: RSGD
     optimizer_args:
       learningRate: 0.25

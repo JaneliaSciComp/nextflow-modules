@@ -9,8 +9,7 @@ process BIGSTREAM_LOCALALIGN {
           path(mov_image, stageAs: 'mov/*'), val(mov_image_subpath),
           path(fix_mask, stageAs: 'fixmask/*'), val(fix_mask_subpath),
           path(mov_mask, stageAs: 'movmask/*'), val(mov_mask_subpath),
-          path(affine_dir, stageAs: 'global_affine/*'), // this is the global affine location
-          val(affine_transform_name), // global affine file name
+          path(affine_transform), // global affine file name
           val(steps),
           path(output_dir),
           val(transform_name), val(transform_subpath),
@@ -31,7 +30,6 @@ process BIGSTREAM_LOCALALIGN {
           env(fix_fullpath), val(fix_image_subpath),
           env(mov_fullpath), val(mov_image_subpath),
           env(affine_fullpath),
-          val(affine_transform_name),
           env(output_fullpath),
           val(transform_name), val(transform_subpath_output),
           val(inv_transform_name), val(inv_transform_subpath_output),
@@ -50,8 +48,7 @@ process BIGSTREAM_LOCALALIGN {
     def fix_mask_subpath_arg = fix_mask && fix_mask_subpath ? "--local-fix-mask-subpath ${fix_mask_subpath}" : ''
     def mov_mask_arg = mov_mask ? "--local-mov-mask \$(readlink ${mov_mask})" : ''
     def mov_mask_subpath_arg = mov_mask && mov_mask_subpath ? "--local-mov-mask-subpath ${mov_mask_subpath}" : ''
-    def affine_dir_arg = affine_dir ? "--global-output-dir ${affine_dir}" : ''
-    def affine_transform_name_arg = affine_transform_name ? "--global-transform-name ${affine_transform_name}" : ''
+    def affine_transform_arg = affine_transform ? "--global-affine-transform ${affine_transform}" : ''
     def steps_arg = steps ? "--local-registration-steps ${steps}" : ''
     def output_dir_arg = output_dir ? "--local-output-dir ${output_dir}" : ''
     def transform_name_arg = transform_name ? "--local-transform-name ${transform_name}" : ''
@@ -95,18 +92,17 @@ process BIGSTREAM_LOCALALIGN {
     else
         output_fullpath=
     fi
-    if [[ "${affine_dir}" != "" ]] ; then
-        affine_fullpath=\$(readlink ${affine_dir})
+    if [[ "${affine_transform}" != "" ]] ; then
+        affine_fullpath=\$(readlink ${affine_transform})
     else
         affine_fullpath=
     fi
-    python /app/bigstream/scripts/main_align_pipeline.py \
+    python /app/bigstream/scripts/main_local_align_pipeline.py \
         ${fix_image_arg} ${fix_image_subpath_arg} \
         ${mov_image_arg} ${mov_image_subpath_arg} \
         ${fix_mask_arg} ${fix_mask_subpath_arg} \
         ${mov_mask_arg} ${mov_mask_subpath_arg} \
-        ${affine_dir_arg} \
-        ${affine_transform_name_arg} \
+        ${affine_transform_arg} \
         ${steps_arg} \
         ${bigstream_config_arg} \
         ${output_dir_arg} \

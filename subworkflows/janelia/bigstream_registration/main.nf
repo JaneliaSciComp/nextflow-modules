@@ -301,8 +301,7 @@ workflow BIGSTREAM_REGISTRATION {
             local_mov ?: [], local_mov_subpath,
             local_fix_mask ?: [], local_fix_mask_subpath,
             local_mov_mask ?: [], local_mov_mask_subpath,
-            global_results_output ?: [],
-            global_results_transform,
+            global_results_output && global_results_transform ? "${global_results_output}/${global_results_transform}" : [],
             local_steps,
             local_output ?: [],
             local_transform_name,
@@ -332,7 +331,6 @@ workflow BIGSTREAM_REGISTRATION {
     local_align_results.subscribe {
         // [
         //    meta, fix, fix_subpath, mov, mov_subpath,
-        //    global_output, global_affine
         //    local_output, 
         //    local_deform, local_deform_subpath,
         //    local_inv_deform, local_inv_deform_subpath
@@ -349,7 +347,6 @@ workflow BIGSTREAM_REGISTRATION {
              cluster_context,
              local_results_fix, local_results_fix_subpath,
              local_results_mov, local_results_mov_subpath,
-             local_results_affine_dir,
              local_results_affine_transform,
              local_results_output,
              local_results_deform_name,
@@ -387,12 +384,7 @@ workflow BIGSTREAM_REGISTRATION {
                 def (ref_image_path, ref_image_subpath, ref_image_scale,
                      image_path, image_subpath, image_scale,
                      warped_image_path, warped_image_subpath) = it
-                def affine_transform_path
-                if (local_results_affine_dir && local_results_affine_transform) {
-                    affine_transform_path = file("${local_results_affine_dir}/${local_results_affine_transform}")
-                } else {
-                    affine_transform_path = []
-                }
+                def affine_transform_path = local_results_affine_transform ?: []
                 def d = [
                     meta,
                     ref_image_path, ref_image_subpath, ref_image_scale,

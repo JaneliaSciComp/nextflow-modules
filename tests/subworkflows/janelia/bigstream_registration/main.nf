@@ -10,16 +10,16 @@ workflow test_registration_with_dask {
             meta,
             file(params.global_fix), params.global_fix_subpath,
             file(params.global_mov), params.global_mov_subpath,
-            params.use_mask && params.global_fix_mask ? file(params.global_fix_mask) : '', params.global_fix_mask_subpath,
-            params.use_mask && params.global_mov_mask ? file(params.global_mov_mask) : '', params.global_mov_mask_subpath,
+            params.use_mask && params.global_fix_mask ? file(params.global_fix_mask) : '', params.use_mask && params.global_fix_mask ? params.global_fix_mask_subpath : '',
+            params.use_mask && params.global_mov_mask ? file(params.global_mov_mask) : '', params.use_mask && params.global_mov_mask ? params.global_mov_mask_subpath : '',
             params.global_steps,
             params.global_output ? file(params.global_output) : '',
             params.global_transform_name,
             params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
-            params.use_mask && params.local_fix_mask ? file(params.local_fix_mask) : '', params.local_fix_mask_subpath,
-            params.use_mask && params.local_mov_mask ? file(params.local_mov_mask) : '', params.local_mov_mask_subpath,
+            params.use_mask && params.local_fix_mask ? file(params.local_fix_mask) : '', params.use_mask && params.local_fix_mask ? params.local_fix_mask_subpath : '',
+            params.use_mask && params.local_mov_mask ? file(params.local_mov_mask) : '', params.use_mask && params.local_mov_mask ? params.local_mov_mask_subpath : '',
             params.local_steps,
             file(params.local_output),
             params.local_transform_name,
@@ -43,8 +43,8 @@ workflow test_registration_with_dask {
         params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
-        params.local_align_cpus,
-        params.local_align_mem_gb,
+        params.local_align_worker_cpus,
+        params.local_align_worker_mem_gb,
     )
 }
 
@@ -89,8 +89,8 @@ workflow test_global_registration_only {
         params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
-        params.local_align_cpus,
-        params.local_align_mem_gb,
+        params.local_align_worker_cpus,
+        params.local_align_worker_mem_gb,
     )
 }
 
@@ -137,8 +137,8 @@ workflow test_local_registration_only_with_dask {
         params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
-        params.local_align_cpus,
-        params.local_align_mem_gb,
+        params.local_align_worker_cpus,
+        params.local_align_worker_mem_gb,
     )
 }
 
@@ -193,8 +193,8 @@ workflow test_registration_with_additional_deformations {
         params.bigstream_config ? file(params.bigstream_config): '',
         params.global_align_cpus,
         params.global_align_mem_gb,
-        params.local_align_cpus,
-        params.local_align_mem_gb,
+        params.local_align_worker_cpus,
+        params.local_align_worker_mem_gb,
     )
 }
 
