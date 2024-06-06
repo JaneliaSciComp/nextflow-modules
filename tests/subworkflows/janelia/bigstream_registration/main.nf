@@ -173,7 +173,7 @@ workflow test_registration_with_additional_deformations {
             params.local_align_name, params.local_align_subpath,
             [
                 [
-                    file(params.local_fix), params.local_fix_subpath, '',
+                    file(params.local_fix), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
                     file(params.local_mov), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
                     file("${params.local_output}/${params.local_align_name}"), '',
                 ],
