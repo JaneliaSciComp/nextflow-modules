@@ -5,6 +5,9 @@ workflow test_registration_with_dask {
         id: 'test-registration-with-dask',
     ]
 
+    def global_output = params.global_output ? file(params.global_output) : ''
+    def local_output = file(params.local_output)
+
     def registration_input = Channel.of(
         [
             meta,
@@ -13,19 +16,21 @@ workflow test_registration_with_dask {
             params.use_mask && params.global_fix_mask ? file(params.global_fix_mask) : '', params.use_mask && params.global_fix_mask ? params.global_fix_mask_subpath : '',
             params.use_mask && params.global_mov_mask ? file(params.global_mov_mask) : '', params.use_mask && params.global_mov_mask ? params.global_mov_mask_subpath : '',
             params.global_steps,
-            params.global_output ? file(params.global_output) : '',
+            global_output, // global transform output
             params.global_transform_name,
+            global_align, // global align output
             params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.use_mask && params.local_fix_mask ? file(params.local_fix_mask) : '', params.use_mask && params.local_fix_mask ? params.local_fix_mask_subpath : '',
             params.use_mask && params.local_mov_mask ? file(params.local_mov_mask) : '', params.use_mask && params.local_mov_mask ? params.local_mov_mask_subpath : '',
             params.local_steps,
-            file(params.local_output),
+            local_output, // local transform output
             params.local_transform_name,
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
+            local_output, // local align output
             params.local_align_name, params.local_align_subpath,
             [], // additional deformations
             params.with_dask,
@@ -53,6 +58,8 @@ workflow test_global_registration_only {
         id: 'test-global-registration-only',
     ]
 
+    def global_output = params.global_output ? file(params.global_output) : ''
+
     def registration_input = Channel.of(
         [
             meta,
@@ -61,17 +68,19 @@ workflow test_global_registration_only {
             params.global_fix_mask ? file(params.global_fix_mask) : '', params.global_fix_mask_subpath,
             params.global_mov_mask ? file(params.global_mov_mask) : '', params.global_mov_mask_subpath,
             params.global_steps,
-            params.global_output ? file(params.global_output) : '',
+            global_output, // global transform output
             params.global_transform_name,
+            global_output, // global align output
             params.global_align_name, params.global_align_subpath,
             '', '', // local fix
             '', '', // local mov
             '', '', // local fix mask
             '', '', // local mov mask
             params.local_steps, // local steps
-            '', // local output
+            '', // local transform output
             '', '', // local transform
             '', '', // local inverse transform
+            '', // local align output
             '', '', // local align
             [],
             params.with_dask,
@@ -99,6 +108,8 @@ workflow test_local_registration_only_with_dask {
         id: 'test-local-registration-only-with-dask',
     ]
 
+    def local_output = file(params.local_output)
+
     def registration_input = Channel.of(
         [
             meta,
@@ -107,19 +118,21 @@ workflow test_local_registration_only_with_dask {
             '', '', // global fix mask
             '', '', // global mov mask
             '', // no global steps
-            '', // global output
+            '', // global transform output
             '', // global transform name,
+            '', // global align output
             '', '', // global align name,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
             params.local_fix_mask ? file(params.local_fix_mask) : '', params.local_fix_mask_subpath,
             params.local_mov_mask ? file(params.local_mov_mask) : '', params.local_mov_mask_subpath,
             params.local_steps,
-            file(params.local_output),
+            local_output, // local transform output
             params.local_transform_name,
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
+            local_output, // local align output
             params.local_align_name, params.local_align_subpath,
             [],
             params.with_dask,
@@ -147,6 +160,9 @@ workflow test_registration_with_additional_deformations {
         id: 'test_registration_with_additional_deformations',
     ]
 
+    def global_output = params.global_output ? file(params.global_output) : ''
+    def local_output = file(params.local_output)
+
     def registration_input = Channel.of(
         [
             meta,
@@ -155,8 +171,9 @@ workflow test_registration_with_additional_deformations {
             params.global_fix_mask ? file(params.global_fix_mask) : '', params.global_fix_mask_subpath,
             params.global_mov_mask ? file(params.global_mov_mask) : '', params.global_mov_mask_subpath,
             params.global_steps,
-            params.global_output ? file(params.global_output) : '',
+            global_output, // global transform
             params.global_transform_name,
+            global_output, // global align output
             params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
@@ -165,17 +182,18 @@ workflow test_registration_with_additional_deformations {
             params.local_mov_mask ? file(params.local_mov_mask) : '',
             params.local_mov_mask_subpath,
             params.local_steps,
-            file(params.local_output),
+            local_output, // transform_output
             params.local_transform_name,
             params.local_transform_subpath,
             params.local_inv_transform_name,
             params.local_inv_transform_subpath,
+            local_output, // align_output
             params.local_align_name, params.local_align_subpath,
             [
                 [
                     file(params.local_fix), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
                     file(params.local_mov), "${params.additional_warped_channel}/${params.additional_warped_scale}", '',
-                    file("${params.local_output}/${params.local_align_name}"), '',
+                    file("${local_output}/${params.local_align_name}"), '',
                 ],
             ],
             params.with_dask,
@@ -203,6 +221,9 @@ workflow test_registration_without_warp_but_with_additional_deformations {
         id: 'test_registration_without_warp_but_with_additional_deformations',
     ]
 
+    def global_output = params.global_output ? file(params.global_output) : ''
+    def local_output = file(params.local_output)
+
     def registration_input = Channel.of(
         [
             meta,
@@ -211,8 +232,9 @@ workflow test_registration_without_warp_but_with_additional_deformations {
             params.global_fix_mask ? file(params.global_fix_mask) : '', params.global_fix_mask_subpath,
             params.global_mov_mask ? file(params.global_mov_mask) : '', params.global_mov_mask_subpath,
             params.global_steps,
-            file(params.global_output),
+            global_output, // global transform output
             params.global_transform_name,
+            global_output, // global align output
             params.global_align_name, params.global_align_subpath,
             file(params.local_fix), params.local_fix_subpath,
             file(params.local_mov), params.local_mov_subpath,
