@@ -210,23 +210,23 @@ workflow SPARK_START {
         // wait for all workers to start
         spark_context = SPARK_WAITFORWORKER(meta_workers).groupTuple(by: [0,1])
         | map {
-            def (meta, spark) = it
+            def (meta, spark, data_paths) = it
             log.debug "Create distributed Spark context: ${meta}, ${spark}"
-            [ meta, spark ]
+            [ meta, spark, data_paths ]
         }
     } else {
         // when running locally, the driver needs enough resources to run a spark worker
         spark_context = meta_spark_and_data_files.map {
-            def (meta, spark) = it // ignore data_paths
+            def (meta, spark, data_paths) = it
             spark.workers = 1
             spark.driver_cores = spark_driver_cores + spark_worker_cores
             spark.driver_memory = (2 + spark_worker_cores * spark_gb_per_core) + " GB"
             spark.uri = 'local[*]'
             log.debug "Create local Spark context: ${meta}, ${spark}"
-            [ meta, spark ]
+            [ meta, spark, data_paths ]
         }
     }
 
     emit:
-    spark_context // channel: [ val(meta), val(spark) ]
+    spark_context // channel: [ val(meta), val(spark), path(data_paths) ]
 }
