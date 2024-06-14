@@ -13,9 +13,9 @@ workflow test_start_stop_dask {
         Channel.of(dask_cluster_input),
         params.distributed,
         params.dask_work_dir instanceof String && params.dask_work_dir ? file(params.dask_work_dir) : '',
-        Channel.of(3), // dask workers
-        Channel.value(2), // required workers
-        1, // worker cores
+        3,   // dask workers
+        2,   // required workers
+        1,   // worker cores
         1.5, // worker mem
     )
 
