@@ -8,7 +8,7 @@ process OMETIFF_TO_N5 {
           path(input_path),
           path(output_path),
           val(output_name),
-          val(scale_subpath)
+          val(fullscale_subpath)
     tuple val(dask_scheduler),
           path(dask_config)
     val(data_crop_start)
@@ -17,8 +17,8 @@ process OMETIFF_TO_N5 {
     val(mem_gb)
 
     output:
-    tuple val(meta), path(input_path), path("${output_path}/${output_name}/c*"), val(output_name), val(scale_subpath), emit: results
-    path('versions.yml')                                                                                             , emit: versions
+    tuple val(meta), path(input_path), path("${output_path}/${output_name}/c*"), val(output_name), val(fullscale_subpath), emit: results
+    path('versions.yml')                                                                                                 , emit: versions
 
     script:
     def args = task.ext.args ?: ''
@@ -28,12 +28,14 @@ process OMETIFF_TO_N5 {
     def dask_config_arg = dask_config ? "--dask-config ${dask_config}" : ''
 
     """
+    input_fullpath=\$(readlink ${input_path})
     output_fullpath=\$(readlink ${output_path})
     mkdir -p \${output_fullpath}
 
     python /opt/scripts/n5-tools/ometif_to_n5.py \
-        -i ${input_path} \
-        -o ${output_path}/${output_name} -d ${scale_subpath} \
+        -i ${input_fullpath} \
+        -o ${output_path}/${output_name} \
+        -d ${fullscale_subpath} \
         ${data_crop_start_arg} \
         ${data_crop_size_arg} \
         ${dask_scheduler_arg} \
