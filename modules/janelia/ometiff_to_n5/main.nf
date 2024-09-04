@@ -7,7 +7,7 @@ process OMETIFF_TO_N5 {
     tuple val(meta),
           path(input_path),
           path(output_path),
-          val(output_name),
+          val(n5_container_name),
           val(fullscale_subpath)
     tuple val(dask_scheduler),
           path(dask_config)
@@ -17,7 +17,7 @@ process OMETIFF_TO_N5 {
     val(mem_gb)
 
     output:
-    tuple val(meta), path(input_path), path("${output_path}/${output_name}/c*"), val(output_name), val(fullscale_subpath), emit: results
+    tuple val(meta), path(input_path), path("${output_path}/${n5_container_name}/c*"), val(n5_container_name), val(fullscale_subpath), emit: results
     path('versions.yml')                                                                                                 , emit: versions
 
     script:
@@ -34,7 +34,7 @@ process OMETIFF_TO_N5 {
 
     python /opt/scripts/n5-tools/ometif_to_n5.py \
         -i \${input_fullpath} \
-        -o ${output_path}/${output_name} \
+        -o ${output_path}/${n5_container_name} \
         -d ${fullscale_subpath} \
         ${data_crop_start_arg} \
         ${data_crop_size_arg} \
