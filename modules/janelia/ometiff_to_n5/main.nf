@@ -33,7 +33,7 @@ process OMETIFF_TO_N5 {
     mkdir -p \${output_fullpath}
 
     python /opt/scripts/n5-tools/ometif_to_n5.py \
-        -i ${input_fullpath} \
+        -i \${input_fullpath} \
         -o ${output_path}/${output_name} \
         -d ${fullscale_subpath} \
         ${data_crop_start_arg} \
