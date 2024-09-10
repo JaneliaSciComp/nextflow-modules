@@ -35,6 +35,7 @@ process DASK_STARTMANAGER {
     tuple val(meta),
           path(cluster_work_dir, stageAs: 'dask_work/*'),
           path(data, stageAs: '?/*')
+    path(dask_config)
 
     output:
     tuple val(meta), env(cluster_work_fullpath), emit: cluster_info
@@ -47,12 +48,14 @@ process DASK_STARTMANAGER {
     def args = task.ext.args ?: ''
     def container_engine = workflow.containerEngine
     
+    def set_dask_config_env = dask_config ? "export DASK_CONFIG=\$(readlink ${dask_config})" : ''
     def dask_scheduler_pid_file ="${cluster_work_dir}/dask-scheduler.pid"
     def dask_scheduler_info_file = "${cluster_work_dir}/dask-scheduler-info.json"
     def terminate_file_name = "${cluster_work_dir}/terminate-dask"
 
     """
     cluster_work_fullpath=\$(readlink ${cluster_work_dir})
+    ${set_dask_config_env}
 
     echo "Scheduler's environment"
     env
@@ -84,6 +87,7 @@ process DASK_STARTWORKER {
           val(scheduler_address),
           val(worker_id),
           path(data, stageAs: '?/*')
+    path(dask_config)
     val(worker_cpus)
     val(worker_mem_in_gb)
 
@@ -98,6 +102,7 @@ process DASK_STARTWORKER {
     def args = task.ext.args ?: ''
     def container_engine = workflow.containerEngine
 
+    def set_dask_config_env = dask_config ? "export DASK_CONFIG=\$(readlink ${dask_config})" : ''
     def dask_worker_name = "worker-${worker_id}"
     def dask_scheduler_info_file = "${cluster_work_dir}/dask-scheduler-info.json"
     def terminate_file_name = "${cluster_work_dir}/terminate-dask"
@@ -111,6 +116,7 @@ process DASK_STARTWORKER {
     """
     cluster_work_fullpath=\$(readlink ${cluster_work_dir})
 
+    ${set_dask_config_env}
     echo "Worker's environment"
     env
 
@@ -221,6 +227,7 @@ workflow DASK_START {
     take:
     meta_and_files       // channel: [val(meta), files...]
     distributed          // bool: if true create distributed cluster
+    dask_config          // dask config
     dask_work_dir        // dask work directory
     total_workers        // int: number of total workers in the cluster
     required_workers     // int: number of required workers in the cluster
@@ -229,6 +236,7 @@ workflow DASK_START {
 
     main:
     if (distributed) {
+        def dask_config_path = dask_config ? file(dask_config) : []
         // prepare dask cluster work dir meta -> [ meta, cluster_work_dir ]
         def dask_prepare_result = DASK_PREPARE(
             meta_and_files,
@@ -241,7 +249,10 @@ workflow DASK_START {
         }
 
         // start scheduler
-        DASK_STARTMANAGER(dask_prepare_result)
+        DASK_STARTMANAGER(
+            dask_prepare_result,
+            dask_config_path,
+        )
 
         // wait for manager to start
         DASK_WAITFORMANAGER(dask_prepare_result.map {it[0..1]} )
@@ -263,6 +274,7 @@ workflow DASK_START {
 
         // start dask workers
         DASK_STARTWORKER(dask_workers_input, // meta, cluster_work_dir, scheduler_address, worker_id, data
+                         dask_config_path,
                          dask_worker_cpus,   // cpus
                          dask_worker_mem_gb, // mem
         )
