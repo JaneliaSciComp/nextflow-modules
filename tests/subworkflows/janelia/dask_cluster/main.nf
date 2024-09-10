@@ -57,7 +57,7 @@ workflow test_two_dask_clusters {
     def dask_cluster_info = DASK_START(
         Channel.fromList(dask_cluster_input),
         true,
-        params.dask_config,
+        '',
         test_dir,
         3, // dask workers
         2, // required workers
