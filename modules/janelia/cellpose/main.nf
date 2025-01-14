@@ -1,5 +1,5 @@
 process CELLPOSE {
-    container { task.ext.container ?: 'janeliascicomp/cellpose:2.2.3-dask2023.10.1-py11' }
+    container { task.ext.container ?: 'janeliascicomp/cellpose:3.1.0-dask2024.12.1-py11' }
     cpus { cellpose_cpus }
     memory "${cellpose_mem_in_gb} GB"
 
@@ -60,7 +60,7 @@ process CELLPOSE {
     fi
     ${set_models_path}
     echo "Run: " \
-        python /opt/scripts/cellpose/distributed_cellpose.py \
+        python /opt/scripts/cellpose/main_distributed_cellpose.py \
         -i \${input_image_fullpath} ${input_image_subpath_arg} \
         -o \${full_outputname} \
         --working-dir \${working_fullpath} \
@@ -69,7 +69,7 @@ process CELLPOSE {
         ${dask_config_arg} \
         ${args}
 
-    python /opt/scripts/cellpose/distributed_cellpose.py \
+    python /opt/scripts/cellpose/main_distributed_cellpose.py \
         -i \${input_image_fullpath} ${input_image_subpath_arg} \
         -o \${full_outputname} \
         --working-dir \${working_fullpath} \
@@ -78,8 +78,8 @@ process CELLPOSE {
         ${dask_config_arg} \
         ${args}
 
-    cellpose_version=\$(python /opt/scripts/cellpose/distributed_cellpose.py \
-                            --version | \
+    cellpose_version=\$(python /opt/scripts/cellpose/main_distributed_cellpose.py \
+                        --version | \
                         grep "cellpose version" | \
                         sed "s/cellpose version:\\s*//")
     echo "Cellpose version: \${cellpose_version}"
