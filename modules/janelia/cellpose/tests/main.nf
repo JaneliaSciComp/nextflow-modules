@@ -48,6 +48,7 @@ workflow test_cellpose {
     def cellpose_results = CELLPOSE(
         cellpose_test_data,
         Channel.of(['', []]),
+        params.logging_config ? file(params.logging_config) : [],
         params.cellpose_driver_cpus,
         params.cellpose_driver_mem_gb,
     )

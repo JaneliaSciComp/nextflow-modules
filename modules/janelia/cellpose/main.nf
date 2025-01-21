@@ -1,5 +1,5 @@
 process CELLPOSE {
-    container { task.ext.container ?: 'janeliascicomp/cellpose:2.2.3-dask2023.10.1-py11' }
+    container { task.ext.container ?: 'janeliascicomp/cellpose:3.1.0-dask2024.12.1-py11' }
     cpus { cellpose_cpus }
     memory "${cellpose_mem_in_gb} GB"
 
@@ -13,6 +13,7 @@ process CELLPOSE {
           path(working_dir, stageAs: 'cellpose-work/*') // this is optional
     tuple val(dask_scheduler),
           path(dask_config) // this is optional - if undefined pass in as empty list ([])
+    path(logging_config) // this is optional - if undefined pass in as empty list ([])
     val(cellpose_cpus)
     val(cellpose_mem_in_gb)
 
@@ -34,10 +35,10 @@ process CELLPOSE {
            mkdir -p \${models_fullpath} && \
            export CELLPOSE_LOCAL_MODELS_PATH=\${models_fullpath}"
         : ''
+    def logging_config_arg = logging_config ? "--logging-config ${logging_config}" : ''
     def models_path_arg = models_path ? "--models-dir ${models_path}" : ''
     def working_dir_arg = working_dir ?: output_dir
     def output_image_name = output_name ?: ''
-    def output = output_image_name ? "${output_dir}/${output_image_name}" : output_dir
     def dask_scheduler_arg = dask_scheduler ? "--dask-scheduler ${dask_scheduler}" : ''
     def dask_config_arg = dask_config ? "--dask-config ${dask_config}" : ''
     (output_name_noext, output_name_ext) = output_image_name.lastIndexOf('.').with {
@@ -60,26 +61,28 @@ process CELLPOSE {
     fi
     ${set_models_path}
     echo "Run: " \
-        python /opt/scripts/cellpose/distributed_cellpose.py \
+        python /opt/scripts/cellpose/main_distributed_cellpose.py \
         -i \${input_image_fullpath} ${input_image_subpath_arg} \
         -o \${full_outputname} \
         --working-dir \${working_fullpath} \
         ${models_path_arg} \
         ${dask_scheduler_arg} \
         ${dask_config_arg} \
+        ${logging_config_arg} \
         ${args}
 
-    python /opt/scripts/cellpose/distributed_cellpose.py \
+    python /opt/scripts/cellpose/main_distributed_cellpose.py \
         -i \${input_image_fullpath} ${input_image_subpath_arg} \
         -o \${full_outputname} \
         --working-dir \${working_fullpath} \
         ${models_path_arg} \
         ${dask_scheduler_arg} \
         ${dask_config_arg} \
+        ${logging_config_arg} \
         ${args}
 
-    cellpose_version=\$(python /opt/scripts/cellpose/distributed_cellpose.py \
-                            --version | \
+    cellpose_version=\$(python /opt/scripts/cellpose/main_distributed_cellpose.py \
+                        --version | \
                         grep "cellpose version" | \
                         sed "s/cellpose version:\\s*//")
     echo "Cellpose version: \${cellpose_version}"

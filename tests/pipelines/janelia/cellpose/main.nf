@@ -27,7 +27,6 @@ workflow test_distributed_cellpose_with_dask {
             file(params.output_image_dir).parent, // pass the parent for the output as the output may not exist
         ] +
         (params.cellpose_work_dir ? [ file(params.cellpose_work_dir) ] : []) +
-        (params.dask_config ? [ file(params.dask_config) ] : []) +
         (params.cellpose_models_dir ? [ file(params.cellpose_models_dir).parent ] : [])
         [
             [
@@ -41,6 +40,7 @@ workflow test_distributed_cellpose_with_dask {
     def dask_cluster = DASK_START(
         cellpose_test_data,
         true, // distributed
+        params.dask_config ? file(params.dask_config) : [],
         file(params.dask_work_dir),
         params.cellpose_workers,
         params.cellpose_required_workers,
@@ -83,6 +83,7 @@ workflow test_distributed_cellpose_with_dask {
     def cellpose_results = CELLPOSE(
         cellpose_input.data,
         cellpose_input.cluster,
+        params.logging_config ? file(params.logging_config) : [],
         params.cellpose_driver_cpus,
         params.cellpose_driver_mem_gb,
     )
