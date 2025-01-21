@@ -83,6 +83,7 @@ workflow test_distributed_cellpose_with_dask {
     def cellpose_results = CELLPOSE(
         cellpose_input.data,
         cellpose_input.cluster,
+        params.logging_config ? file(params.logging_config) : [],
         params.cellpose_driver_cpus,
         params.cellpose_driver_mem_gb,
     )
