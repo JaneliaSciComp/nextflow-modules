@@ -8,16 +8,16 @@ process RS_FISH {
     tuple val(meta),
           path(input_image),
           val(input_dataset),
-          val(spots_result_name),
           path(spots_output_dir, stageAs: 'spots/*'),
+          val(spots_result_name),
           val(spark)
 
     output:
     tuple val(meta),
           path(input_image),
           val(input_dataset),
-          val(spots_result_name),
           path(spots_output_dir),
+          val(spots_result_name),
           val(spark),                           emit: params
     tuple val(meta), env(full_output_filename), emit: csv
     path "versions.yml",                        emit: versions
