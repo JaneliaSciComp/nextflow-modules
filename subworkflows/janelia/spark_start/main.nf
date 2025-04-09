@@ -1,6 +1,6 @@
 process SPARK_STARTMANAGER {
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.1.3'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -28,17 +28,28 @@ process SPARK_STARTMANAGER {
         echo "Spark work directory: \${full_spark_work_dir} - already exists"
     fi
 
-    /opt/scripts/startmanager.sh "$spark_local_dir" \${full_spark_work_dir} "$spark_master_log_file" \
-        "$spark_config_filepath" "$terminate_file_name" "$args" $sleep_secs $container_engine
+    CMD=(
+        /opt/scripts/startmanager.sh
+        "$spark_local_dir"
+        \${full_spark_work_dir}
+        "$spark_master_log_file"
+        "$spark_config_filepath"
+        "$terminate_file_name"
+        "$args"
+        $sleep_secs $container_engine
+    )
+    echo "CMD: \${CMD[@]}"
+    (exec "\${CMD[@]}")
     """
 }
 
 process SPARK_WAITFORMANAGER {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.1.3'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
     errorStrategy { task.exitStatus == 2
         ? 'retry' // retry on a timeout to prevent the case when the waiter is started before the master and master never gets its chance
-        : 'terminate' }
+        : 'terminate'
+    }
     maxRetries 20
 
     input:
@@ -58,20 +69,33 @@ process SPARK_WAITFORMANAGER {
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
-    /opt/scripts/waitformanager.sh "$spark_master_log_name" "$terminate_file_name" $sleep_secs $max_wait_secs
-    export spark_uri=`cat spark_uri`
+    CMD=(
+        /opt/scripts/waitformanager.sh
+        "$spark_master_log_name"
+        "$terminate_file_name"
+        $sleep_secs
+        $max_wait_secs
+    )
+
+    echo "CMD: \${CMD[@]}"
+    (exec "\${CMD[@]}")
+
+    spark_uri=\$(cat spark_uri)
+
+    echo "Export spark URI: \${spark_uri}"
     """
 }
 
 process SPARK_STARTWORKER {
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.1.3'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
     cpus { spark.worker_cores }
     memory { spark.worker_memory }
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), val(worker_id)
     path(data_paths, stageAs: '?/*')
+    val(spark_classpath_elems) // this is not a path because these are typically files inside the container
 
     output:
     tuple val(meta), val(spark), env(full_spark_work_dir), val(worker_id)
@@ -87,19 +111,34 @@ process SPARK_STARTWORKER {
     terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     worker_memory = spark.worker_memory.replace(" KB",'').replace(" MB",'').replace(" GB",'').replace(" TB",'')
     container_engine = workflow.containerEngine
+    def spark_classpath = get_values_as_collection(spark_classpath_elems).join(':')
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
-    /opt/scripts/startworker.sh "\${full_spark_work_dir}" "${spark.uri}" $worker_id \
-        ${spark.worker_cores} ${worker_memory} \
-        "$spark_worker_log_file" "$spark_config_filepath" "$terminate_file_name" \
-        "$args" $sleep_secs $container_engine
+    export SPARK_CLASSPATH="${spark_classpath}"
+    echo "SPARK_CLASSPATH: \${SPARK_CLASSPATH}"
+    CMD=(
+        /opt/scripts/startworker.sh
+        "\${full_spark_work_dir}"
+        "${spark.uri}"
+        "$worker_id"
+        "${spark.worker_cores}"
+        "${worker_memory}"
+        "$spark_worker_log_file"
+        "$spark_config_filepath"
+        "$terminate_file_name"
+        "$args"
+        "$sleep_secs"
+        "$container_engine"
+    )
+    echo "CMD: \${CMD[@]}"
+    (exec "\${CMD[@]}")
     """
 }
 
 process SPARK_WAITFORWORKER {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.1.3'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
     // retry on a timeout to prevent the case when the waiter is started
     // before the worker and the worker never gets its chance
     errorStrategy { task.exitStatus == 2 ? 'retry' : 'terminate' }
@@ -122,15 +161,21 @@ process SPARK_WAITFORWORKER {
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
-    /opt/scripts/waitforworker.sh "${spark.uri}" \
-        "$spark_worker_log_file" "$terminate_file_name" \
-        $sleep_secs $max_wait_secs
+    CMD=(
+        /opt/scripts/waitforworker.sh
+        "${spark.uri}"
+        "$spark_worker_log_file"
+        "$terminate_file_name"
+        $sleep_secs
+        $max_wait_secs
+    )
+    (exec "\${CMD[@]}")
     """
 }
 
 process SPARK_CLEANUP {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.1.3'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -154,6 +199,7 @@ workflow SPARK_START {
     take:
     ch_meta               // channel: [ meta, [data_paths] ]
     spark_cluster         // boolean: use a distributed cluster?
+    spark_classpath       // [string] classpath for the Spark job
     working_dir           // path: shared storage path for worker communication
     spark_workers         // int: number of workers in the cluster (ignored if spark_cluster is false)
     min_workers           // int: number of minimum required workers
@@ -218,7 +264,11 @@ workflow SPARK_START {
 
         // start workers
         // these run indefinitely until SPARK_TERMINATE is called
-        SPARK_STARTWORKER(meta_workers_with_data.worker, meta_workers_with_data.data)
+        SPARK_STARTWORKER(
+            meta_workers_with_data.worker,
+            meta_workers_with_data.data,
+            spark_classpath,
+        )
         SPARK_STARTWORKER.out.groupTuple(by:[0,1,2], size: n_spark_workers)
         | map {
             def (meta, spark, spark_work_dir, worker_ids) = it
@@ -253,4 +303,16 @@ workflow SPARK_START {
 
     emit:
     spark_context // channel: [ val(meta), val(spark) ]
+}
+
+def get_values_as_collection(values, value_separator=',') {
+    if (values) {
+        if (values instanceof Collection) {
+            values
+        } else {
+            values.tokenize(value_separator)
+        }
+    } else {
+        return []
+    }
 }

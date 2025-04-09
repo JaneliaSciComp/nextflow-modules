@@ -1,0 +1,12 @@
+- name: start distributed spark cluster
+  command: nextflow run ./tests/subworkflows/janelia/spark_cluster/main.nf -entry test_start_stop_dask -c ./tests/subworkflows/janelia/dask_cluster/nextflow.config --distributed true
+  tags:
+    - dask
+  files:
+    - path: output/dask/versions.yml
+- name: start two dask clusters
+  command: nextflow run ./tests/subworkflows/janelia/dask_cluster/main.nf -entry test_two_dask_clusters -c ./tests/subworkflows/janelia/dask_cluster/nextflow.config
+  tags:
+    - dask
+  files:
+    - path: output/dask/versions.yml
