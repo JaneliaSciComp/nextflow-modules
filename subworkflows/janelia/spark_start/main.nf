@@ -49,13 +49,16 @@ process SPARK_STARTMANAGER {
 
     script:
     def args = task.ext.args ?: ''
-    def spark_local_dir = task.ext.spark_local_dir ?: "/tmp/spark-${workflow.sessionId}"
+    def spark_local_dir = task.ext.spark_local_dir
+        ? file(task.ext.spark_local_dir)
+        : "/tmp/spark-${workflow.sessionId}"
     def sleep_secs = task.ext.sleep_secs ?: '1'
     def spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
     def spark_master_log_file = "\${full_spark_work_dir}/sparkmaster.log"
     def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     def container_engine = workflow.containerEngine
     """
+    full_spark_local_dir=\$(readlink -m ${spark_local_dir})
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
     if [[ ! -e \${full_spark_work_dir} ]] ; then
         echo "Create spark work directory ${spark_work_dir} -> \${full_spark_work_dir}"
@@ -66,8 +69,8 @@ process SPARK_STARTMANAGER {
 
     CMD=(
         /opt/scripts/startmanager.sh
-        "$spark_local_dir"
-        \${full_spark_work_dir}
+        "\${full_spark_local_dir}"
+        "\${full_spark_work_dir}"
         "$spark_master_log_file"
         "$spark_config_filepath"
         "$terminate_file_name"
