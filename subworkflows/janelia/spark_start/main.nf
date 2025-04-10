@@ -1,6 +1,6 @@
 process SPARK_STARTMANAGER {
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -45,7 +45,7 @@ process SPARK_STARTMANAGER {
 
 process SPARK_WAITFORMANAGER {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
     errorStrategy { task.exitStatus == 2
         ? 'retry' // retry on a timeout to prevent the case when the waiter is started before the master and master never gets its chance
         : 'terminate'
@@ -88,14 +88,13 @@ process SPARK_WAITFORMANAGER {
 
 process SPARK_STARTWORKER {
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
     cpus { spark.worker_cores }
     memory { spark.worker_memory }
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), val(worker_id)
     path(data_paths, stageAs: '?/*')
-    val(spark_classpath_elems) // this is not a path because these are typically files inside the container
 
     output:
     tuple val(meta), val(spark), env(full_spark_work_dir), val(worker_id)
@@ -111,12 +110,9 @@ process SPARK_STARTWORKER {
     terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     worker_memory = spark.worker_memory.replace(" KB",'').replace(" MB",'').replace(" GB",'').replace(" TB",'')
     container_engine = workflow.containerEngine
-    def spark_classpath = get_values_as_collection(spark_classpath_elems).join(':')
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
-    export SPARK_CLASSPATH="${spark_classpath}"
-    echo "SPARK_CLASSPATH: \${SPARK_CLASSPATH}"
     CMD=(
         /opt/scripts/startworker.sh
         "\${full_spark_work_dir}"
@@ -138,7 +134,7 @@ process SPARK_STARTWORKER {
 
 process SPARK_WAITFORWORKER {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
     // retry on a timeout to prevent the case when the waiter is started
     // before the worker and the worker never gets its chance
     errorStrategy { task.exitStatus == 2 ? 'retry' : 'terminate' }
@@ -175,7 +171,7 @@ process SPARK_WAITFORWORKER {
 
 process SPARK_CLEANUP {
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java8-ubuntu'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -199,7 +195,6 @@ workflow SPARK_START {
     take:
     ch_meta               // channel: [ meta, [data_paths] ]
     spark_cluster         // boolean: use a distributed cluster?
-    spark_classpath       // [string] classpath for the Spark job
     working_dir           // path: shared storage path for worker communication
     spark_workers         // int: number of workers in the cluster (ignored if spark_cluster is false)
     min_workers           // int: number of minimum required workers
@@ -267,7 +262,6 @@ workflow SPARK_START {
         SPARK_STARTWORKER(
             meta_workers_with_data.worker,
             meta_workers_with_data.data,
-            spark_classpath,
         )
         SPARK_STARTWORKER.out.groupTuple(by:[0,1,2], size: n_spark_workers)
         | map {
@@ -303,16 +297,4 @@ workflow SPARK_START {
 
     emit:
     spark_context // channel: [ val(meta), val(spark) ]
-}
-
-def get_values_as_collection(values, value_separator=',') {
-    if (values) {
-        if (values instanceof Collection) {
-            values
-        } else {
-            values.tokenize(value_separator)
-        }
-    } else {
-        return []
-    }
 }
