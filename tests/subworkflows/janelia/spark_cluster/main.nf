@@ -8,9 +8,13 @@ workflow test_start_stop_spark {
         [id: 'test_local_spark'],
         [/* empty data paths */],
     ]
-
+    def spark_config = [
+        'spark.driver.userClassPathFirst': true,
+        'spark.executor.userClassPathFirst': true,
+    ]
     def spark_cluster_info = SPARK_START(
         Channel.of(spark_cluster_input),
+        spark_config,
         params.distributed,
         params.spark_work_dir instanceof String && params.spark_work_dir ? file(params.spark_work_dir) : '',
         3,   // spark workers

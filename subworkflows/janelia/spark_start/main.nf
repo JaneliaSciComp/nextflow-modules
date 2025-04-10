@@ -1,3 +1,35 @@
+process PREPARE_SPARK_CONFIG {
+    label 'process_single'
+    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+
+    input:
+    tuple val(meta), val(spark), path(spark_work_dir)
+    val(spark_config)
+
+    output:
+    tuple val(meta), val(spark), env(full_spark_work_dir), emit: spark_inputs
+    env(spark_config_filepath)                           , emit: spark_config_file
+
+    script:
+    def spark_local_dir = task.ext.spark_local_dir ?: "/tmp/spark-${workflow.sessionId}"
+    def spark_config_content = spark_config.inject('# Spark configuration') { acc, k, v ->
+        "${acc}\n${k}=${v}"
+    }
+    """
+    full_spark_work_dir=\$(readlink -m ${spark_work_dir})
+    if [[ ! -e \${full_spark_work_dir} ]] ; then
+        echo "Create spark work directory ${spark_work_dir} -> \${full_spark_work_dir}"
+        mkdir -p \${full_spark_work_dir}
+    else
+        echo "Spark work directory: \${full_spark_work_dir} - already exists"
+    fi
+    spark_config_filepath="\${full_spark_work_dir}/spark-defaults.conf"
+    echo "Create spark config file \${spark_config_filepath}"
+    echo "${spark_config_content}" > \${spark_config_filepath}
+    echo "spark.local.dir=${spark_local_dir}" >> \${spark_config_filepath}
+    """
+}
+
 process SPARK_STARTMANAGER {
     label 'process_long'
     container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
@@ -36,7 +68,8 @@ process SPARK_STARTMANAGER {
         "$spark_config_filepath"
         "$terminate_file_name"
         "$args"
-        $sleep_secs $container_engine
+        $sleep_secs
+        $container_engine
     )
     echo "CMD: \${CMD[@]}"
     (exec "\${CMD[@]}")
@@ -194,6 +227,7 @@ process SPARK_CLEANUP {
 workflow SPARK_START {
     take:
     ch_meta               // channel: [ meta, [data_paths] ]
+    config                // map: spark configuration options
     spark_cluster         // boolean: use a distributed cluster?
     working_dir           // path: shared storage path for worker communication
     spark_workers         // int: number of workers in the cluster (ignored if spark_cluster is false)
@@ -206,21 +240,31 @@ workflow SPARK_START {
     main:
     // create a Spark context for each meta
     def n_spark_workers = spark_workers ?: 1
-    def meta_and_spark = ch_meta
+
+    def spark_config = config + [
+        'spark.rpc.askTimeout': '300s',
+        'spark.storage.blockManagerHeartBeatMs': '30000',
+        'spark.rpc.retry.wait': '30s',
+        'spark.kryoserializer.buffer.max': '1024m',
+        'spark.core.connection.ack.wait.timeout': '600s',
+        'spark.driver.maxResultSize': '0',
+        'spark.worker.cleanup.enabled': 'true',
+    ]
+
+    def spark_inputs = ch_meta
     | map {
-        def (meta, data_paths) = it // ch_meta
+        def (meta) = it // ch_meta: [ meta, [data_paths] ] - ignore data_paths
         def spark_work_dir = file("${working_dir}/spark/${meta.id}")
-        def spark = [:]
-        spark.work_dir = spark_work_dir
-        spark.workers = n_spark_workers
-        spark.worker_cores = spark_worker_cpus ?: 1
-        spark.driver_cores = spark_driver_cpus ?: 1
-        def spark_driver_mem_gb_value = spark_driver_mem_gb ?: (spark.driver_cores * spark_gb_per_cpu)
-        spark.driver_memory = "${spark_driver_mem_gb_value} GB"
-        spark.parallelism = (n_spark_workers * spark_worker_cpus)
-        // 1 GB of overhead for Spark, the rest for executors
-        spark.worker_memory = (spark_worker_cpus * spark_gb_per_cpu + 1)+" GB"
-        spark.executor_memory = (spark_worker_cpus * spark_gb_per_cpu)+" GB"
+        def spark = [
+            work_dir: spark_work_dir,
+            workers: n_spark_workers,
+            worker_cores: spark_worker_cpus ?: 1,
+            driver_cores: spark_driver_cpus ?: 1,
+            driver_memory: "${spark_driver_mem_gb ?: (spark.driver_cores * spark_gb_per_cpu)} GB",
+            parallelism: (n_spark_workers * spark_worker_cpus),
+            worker_memory: (spark_worker_cpus * spark_gb_per_cpu + 1)+" GB", // 1 GB of overhead for Spark, the rest for executors
+            executor_memory: (spark_worker_cpus * spark_gb_per_cpu)+" GB",
+        ]
         def r = [
             meta,
             spark,
@@ -230,13 +274,15 @@ workflow SPARK_START {
         r
     }
 
+    PREPARE_SPARK_CONFIG(spark_inputs, spark_config)
+
     if (spark_cluster) {
         // start the Spark manager
         // this runs indefinitely until SPARK_TERMINATE is called
-        SPARK_STARTMANAGER(meta_and_spark)
+        SPARK_STARTMANAGER(PREPARE_SPARK_CONFIG.out.spark_inputs)
 
         // start a watcher that waits for the manager to be ready
-        SPARK_WAITFORMANAGER(meta_and_spark)
+        SPARK_WAITFORMANAGER(PREPARE_SPARK_CONFIG.out.spark_inputs)
 
         // prepare all arguments for all workers
         def meta_workers_with_data = SPARK_WAITFORMANAGER.out
