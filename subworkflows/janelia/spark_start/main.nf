@@ -11,11 +11,15 @@ process PREPARE_SPARK_CONFIG {
     env(spark_config_filepath)                           , emit: spark_config_file
 
     script:
-    def spark_local_dir = task.ext.spark_local_dir ?: "/tmp/spark-${workflow.sessionId}"
+    def spark_local_dir = task.ext.spark_local_dir
+        ? file(task.ext.spark_local_dir)
+        : "/tmp/spark-${workflow.sessionId}"
+
     def spark_config_content = spark_config.inject('# Spark configuration') { acc, k, v ->
         "${acc}\n${k}=${v}"
     }
     """
+    full_spark_local_dir=\$(readlink -m ${spark_local_dir})
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
     if [[ ! -e \${full_spark_work_dir} ]] ; then
         echo "Create spark work directory ${spark_work_dir} -> \${full_spark_work_dir}"
@@ -26,7 +30,7 @@ process PREPARE_SPARK_CONFIG {
     spark_config_filepath="\${full_spark_work_dir}/spark-defaults.conf"
     echo "Create spark config file \${spark_config_filepath}"
     echo "${spark_config_content}" > \${spark_config_filepath}
-    echo "spark.local.dir=${spark_local_dir}" >> \${spark_config_filepath}
+    echo "spark.local.dir=\${full_spark_local_dir}" >> \${spark_config_filepath}
     """
 }
 
@@ -44,13 +48,13 @@ process SPARK_STARTMANAGER {
     task.ext.when == null || task.ext.when
 
     script:
-    args = task.ext.args ?: ''
-    spark_local_dir = task.ext.spark_local_dir ?: "/tmp/spark-${workflow.sessionId}"
-    sleep_secs = task.ext.sleep_secs ?: '1'
-    spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
-    spark_master_log_file = "\${full_spark_work_dir}/sparkmaster.log"
-    terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    container_engine = workflow.containerEngine
+    def args = task.ext.args ?: ''
+    def spark_local_dir = task.ext.spark_local_dir ?: "/tmp/spark-${workflow.sessionId}"
+    def sleep_secs = task.ext.sleep_secs ?: '1'
+    def spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
+    def spark_master_log_file = "\${full_spark_work_dir}/sparkmaster.log"
+    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
+    def container_engine = workflow.containerEngine
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
     if [[ ! -e \${full_spark_work_dir} ]] ; then
@@ -95,10 +99,10 @@ process SPARK_WAITFORMANAGER {
     task.ext.when == null || task.ext.when
 
     script:
-    sleep_secs = task.ext.sleep_secs ?: '1'
-    max_wait_secs = task.ext.max_wait_secs ?: '3600'
-    spark_master_log_name = "\${full_spark_work_dir}/sparkmaster.log"
-    terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
+    def sleep_secs = task.ext.sleep_secs ?: '1'
+    def max_wait_secs = task.ext.max_wait_secs ?: '3600'
+    def spark_master_log_name = "\${full_spark_work_dir}/sparkmaster.log"
+    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
@@ -136,13 +140,13 @@ process SPARK_STARTWORKER {
     task.ext.when == null || task.ext.when
 
     script:
-    args = task.ext.args ?: ''
-    sleep_secs = task.ext.sleep_secs ?: '1'
-    spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
-    spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
-    terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    worker_memory = spark.worker_memory.replace(" KB",'').replace(" MB",'').replace(" GB",'').replace(" TB",'')
-    container_engine = workflow.containerEngine
+    def args = task.ext.args ?: ''
+    def sleep_secs = task.ext.sleep_secs ?: '1'
+    def spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
+    def spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
+    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
+    def worker_memory = spark.worker_memory.replace(" KB",'').replace(" MB",'').replace(" GB",'').replace(" TB",'')
+    def container_engine = workflow.containerEngine
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
@@ -183,10 +187,10 @@ process SPARK_WAITFORWORKER {
     task.ext.when == null || task.ext.when
 
     script:
-    sleep_secs = task.ext.sleep_secs ?: '1'
-    max_wait_secs = task.ext.max_wait_secs ?: '3600'
-    spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
-    terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
+    def sleep_secs = task.ext.sleep_secs ?: '1'
+    def max_wait_secs = task.ext.max_wait_secs ?: '3600'
+    def spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
+    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     """
     full_spark_work_dir=\$(readlink -m ${spark_work_dir})
 
