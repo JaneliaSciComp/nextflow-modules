@@ -330,7 +330,7 @@ workflow SPARK_START {
         }
     } else {
         // when running locally, the driver needs enough resources to run a spark worker
-        spark_context = meta_and_spark.map {
+        spark_context = PREPARE_SPARK_CONFIG.out.spark_inputs.map {
             def (meta, spark, spark_work_dir) = it
             spark.workers = 1
             spark.driver_cores = spark_driver_cpus + spark_worker_cpus
