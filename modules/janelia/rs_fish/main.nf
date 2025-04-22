@@ -14,7 +14,7 @@ process RS_FISH {
 
     output:
     tuple val(meta),
-          path(input_image),
+          env(INPUT_N5),
           val(input_dataset),
           path(spots_output_dir),
           val(spots_result_name),
