@@ -26,7 +26,7 @@ process CELLPOSE {
           env(input_image_fullpath),
           val(image_subpath),
           eval('(IFS=$"\n"; echo "${output_label_images[@]}")'),
-          val(labels_subpath)                                  , emit: results
+          val(output_labels_subpath)                           , emit: results
     path('versions.yml')                                       , emit: versions
 
     when:
@@ -38,6 +38,7 @@ process CELLPOSE {
     def input_image_subpath_arg = image_subpath
                                     ? "--input-subpath ${image_subpath}"
                                     : ''
+    output_labels_subpath = labels_subpath ?: image_subpath
     def output_labels_subpath_arg  = labels_subpath
                                     ? "--output-subpath ${labels_subpath}"
                                     : ''
