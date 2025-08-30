@@ -1,8 +1,9 @@
 process BIGSTREAM_LOCALALIGN {
     tag "${meta.id}"
-    container { task && task.ext.container ?: 'ghcr.io/janeliascicomp/bigstream:5.0.2-dask2025.5.1-py12' }
+    container { task && task.ext.container ?: 'ghcr.io/janeliascicomp/bigstream:5.0.2-omezarr-dask2025.5.1-py12-ol9' }
     cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"
+    conda 'modules/janelia/bigstream/conda-env.yml'
 
     input:
     tuple val(meta),
@@ -81,6 +82,18 @@ process BIGSTREAM_LOCALALIGN {
     inv_transform_subpath_output = inv_transform_subpath ?: transform_subpath_output
 
     """
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_MISSING_OPT="readlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_MISSING_OPT="readlink -m"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
+
     if [[ "${fix_image}" != "" ]];  then
         full_fix_image=\$(readlink ${fix_image})
         echo "Fix volume full path: \${full_fix_image}"
@@ -103,7 +116,7 @@ process BIGSTREAM_LOCALALIGN {
     fi
 
     if [[ "${transform_dir}" != "" ]] ; then
-        full_transform_dir=\$(readlink -m ${transform_dir})
+        full_transform_dir=\$(\${READLINK_MISSING_OPT} ${transform_dir})
         if [[ ! -e \${full_transform_dir} ]] ; then
             echo "Create transform directory: \${full_transform_dir}"
             mkdir -p \${full_transform_dir}
@@ -133,7 +146,7 @@ process BIGSTREAM_LOCALALIGN {
     fi
 
     if [[ "${align_dir}" != "" ]] ; then
-        full_align_dir=\$(readlink -m ${align_dir})
+        full_align_dir=\$(\${READLINK_MISSING_OPT} ${align_dir})
         if [[ ! -e \${full_align_dir} ]] ; then
             echo "Create align directory: \${full_align_dir}"
             mkdir -p \${full_align_dir}
@@ -154,7 +167,7 @@ process BIGSTREAM_LOCALALIGN {
     fi
 
     CMD=(
-        python /app/bigstream/scripts/main_local_align_pipeline.py
+        python -m launchers.main_local_align_pipeline
         ${fix_image_arg} ${fix_image_subpath_arg}
         ${fix_timeindex_arg} ${fix_channel_arg}
         ${mov_image_arg} ${mov_image_subpath_arg}
@@ -173,6 +186,7 @@ process BIGSTREAM_LOCALALIGN {
         ${dask_config_arg}
         ${args}
     )
+
     echo "CMD: \${CMD[@]}"
     (exec "\${CMD[@]}")
 

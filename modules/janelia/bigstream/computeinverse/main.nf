@@ -1,8 +1,9 @@
 process BIGSTREAM_COMPUTEINVERSE {
     tag "${meta.id}"
-    container { task && task.ext.container ?: 'ghcr.io/janeliascicomp/bigstream:5.0.2-dask2025.5.1-py12' }
+    container { task && task.ext.container ?: 'ghcr.io/janeliascicomp/bigstream:5.0.2-omezarr-dask2025.5.1-py12-ol9' }
     cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"
+    conda 'modules/janelia/bigstream/conda-env.yml'
 
     input:
     tuple val(meta),
@@ -39,23 +40,40 @@ process BIGSTREAM_COMPUTEINVERSE {
     def dask_config_arg = dask_scheduler && dask_config ? "--dask-config ${dask_config}" : ''
 
     """
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_MISSING_OPT="readlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_MISSING_OPT="readlink -m"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
     full_deform_dir=\$(readlink ${deform_dir})
     if [[ "${inv_deform_dir_arg}" == "" ]]; then
         full_inv_deform_dir=\${full_deform_dir}
     else
-        full_inv_deform_dir=\$(readlink -m ${inv_deform_dir})
+        full_inv_deform_dir=\$(\${READLINK_MISSING_OPT} ${inv_deform_dir})
         mkdir -p \${full_inv_deform_dir}
     fi
 
-    python /app/bigstream/scripts/main_compute_local_inverse.py \
-        ${deform_dir_arg} \
-        ${deform_name_arg} \
-        ${deform_subpath_arg} \
-        ${inv_deform_dir_arg} \
-        ${inv_deform_name_arg} \
-        ${inv_deform_subpath_arg} \
-        ${dask_scheduler_arg} \
-        ${dask_config_arg} \
+    CMD=(
+        python -m launchers.main_compute_local_inverse
+        ${deform_dir_arg}
+        ${deform_name_arg}
+        ${deform_subpath_arg}
+        ${inv_deform_dir_arg}
+        ${inv_deform_name_arg}
+        ${inv_deform_subpath_arg}
+        ${dask_scheduler_arg}
+        ${dask_config_arg}
         ${args}
+    )
+
+    echo "CMD: \${CMD[@]}"
+    (exec "\${CMD[@]}")
+
     """
 }
