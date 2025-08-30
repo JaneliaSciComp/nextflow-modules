@@ -22,9 +22,10 @@ process BIOFORMATS2RAW {
     script:
     extra_args = task.ext.args ?: ''
     zarr_output_path = output_path.toString()+"/"+input_image.getBaseName()+".zarr"
+    max_workers = extra_args.contains("--max-workers") ? "" : "--max-workers=$task.cpus"
     """
     /opt/bioformats2raw/bin/bioformats2raw \
-        --max_workers=$task.cpus \
+        $max_workers \
         $extra_args \
         $input_image \
         "$zarr_output_path"
