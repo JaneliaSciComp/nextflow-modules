@@ -1,6 +1,6 @@
 process BIOFORMATS2RAW {
     tag "${meta.id}"
-    container "ghcr.io/janeliascicomp/bioformats2raw:0.9.2"
+    container "ghcr.io/janeliascicomp/bioformats2raw:0.10.1"
     cpus { task.ext.cpus }
     memory { task.ext.memory }
 
