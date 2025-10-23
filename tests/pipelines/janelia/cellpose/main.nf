@@ -4,8 +4,6 @@ include { DASK_START } from '../../../../subworkflows/janelia/dask_start/main'
 include { DASK_STOP  } from '../../../../subworkflows/janelia/dask_stop/main'
 
 process UNTAR_RAW_INPUT {
-    container { task.ext.container }
-
     input: path(tarfile, stageAs:'input-data/*')
     output: path('*.n5')
 
@@ -39,7 +37,7 @@ workflow test_distributed_cellpose_with_dask {
     // create a dask cluster
     def dask_cluster = DASK_START(
         cellpose_test_data,
-        true, // distributed
+        params.distributed, // distributed
         params.dask_config ? file(params.dask_config) : [],
         file(params.dask_work_dir),
         params.cellpose_workers,
@@ -68,14 +66,18 @@ workflow test_distributed_cellpose_with_dask {
             input_path,
             params.input_image_subpath,
             cellpose_models_path,
+            params.model,
             output_path,
             params.output_image_name,
+            params.output_image_subpath,
             cellpose_working_path,
         ]
         def cluster_info = [
             cluster_context.scheduler_address,
             dask_config_path,
         ]
+        log.debug "Cluster data: ${data}"
+        log.debug "Cluster info: ${cluster_info}"
         data: data
         cluster: cluster_info
     }
@@ -83,6 +85,7 @@ workflow test_distributed_cellpose_with_dask {
     def cellpose_results = CELLPOSE(
         cellpose_input.data,
         cellpose_input.cluster,
+        params.preprocessing_config ? file(params.preprocessing_config) : [],
         params.logging_config ? file(params.logging_config) : [],
         params.cellpose_driver_cpus,
         params.cellpose_driver_mem_gb,
