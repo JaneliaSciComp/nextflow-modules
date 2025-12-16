@@ -2,25 +2,7 @@ channels:
   - conda-forge
 dependencies:
   - python=3.12
-  - c-blosc2
-  - dask-image=2024.5.3
-  - flatten_json
-  - h5py=3.11.0
-  - imagecodecs
-  - lz4>=4.3.2
-  - numcodecs
-  - ome-zarr-models=1.3
   - pip
-  - psutil>=5.7.2
-  - pydantic=2.12.4
-  - python-blosc2=3.0.0
-  - pynrrd
-  - pyyaml
-  - roifile
-  - scikit-image>=0.25.2
-  - scikit-learn>=1.7.1
-  - tornado
-  - zarr=3.1.5
+  - psutil>=7.1.3
   - pip:
-    - git+https://github.com/JaneliaSciComp/cellpose-tools@b6b09a4
-    - tifffile[all]==2025.10.16
+    - git+https://github.com/JaneliaSciComp/cellpose-tools@695281d
