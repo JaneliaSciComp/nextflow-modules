@@ -8,7 +8,7 @@ workflow test_registration_no_additional_deformations {
     def global_output = params.global_output ? file(params.global_output) : ''
     def local_output = file(params.local_output)
 
-    def registration_input = Channel.of(
+    def registration_input = channel.of(
         [
             meta,
             file(params.global_fix), params.global_fix_subpath,
@@ -61,7 +61,7 @@ workflow test_registration_and_additional_deformations {
     def global_output = params.global_output ? file(params.global_output) : ''
     def local_output = file(params.local_output)
 
-    def registration_input = Channel.of(
+    def registration_input = channel.of(
         [
             meta,
             file(params.global_fix), params.global_fix_subpath,
@@ -122,7 +122,7 @@ workflow test_registration_without_warp_but_with_additional_deformations {
     def global_output = params.global_output ? file(params.global_output) : ''
     def local_output = file(params.local_output)
 
-    def registration_input = Channel.of(
+    def registration_input = channel.of(
         [
             meta,
             file(params.global_fix), params.global_fix_subpath,
@@ -182,7 +182,7 @@ workflow test_global_registration_only {
 
     def global_output = params.global_output ? file(params.global_output) : ''
 
-    def registration_input = Channel.of(
+    def registration_input = channel.of(
         [
             meta,
             file(params.global_fix), params.global_fix_subpath,
@@ -232,7 +232,7 @@ workflow test_local_registration_only_with_dask {
 
     def local_output = file(params.local_output)
 
-    def registration_input = Channel.of(
+    def registration_input = channel.of(
         [
             meta,
             '', '', // global fix image

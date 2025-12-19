@@ -10,7 +10,7 @@ workflow test_start_stop_dask {
     ]
 
     def dask_cluster_info = DASK_START(
-        Channel.of(dask_cluster_input),
+        channel.of(dask_cluster_input),
         params.distributed,
         params.dask_config,
         params.dask_work_dir instanceof String && params.dask_work_dir ? file(params.dask_work_dir) : '',
@@ -55,7 +55,7 @@ workflow test_two_dask_clusters {
     ]
 
     def dask_cluster_info = DASK_START(
-        Channel.fromList(dask_cluster_input),
+        channel.fromList(dask_cluster_input),
         true,
         '',
         test_dir,

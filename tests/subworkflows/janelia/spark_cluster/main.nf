@@ -13,7 +13,7 @@ workflow test_start_stop_spark {
         'spark.executor.userClassPathFirst': true,
     ]
     def spark_cluster_info = SPARK_START(
-        Channel.of(spark_cluster_input),
+        channel.of(spark_cluster_input),
         spark_config,
         params.distributed,
         params.spark_work_dir instanceof String && params.spark_work_dir ? file(params.spark_work_dir) : '',
