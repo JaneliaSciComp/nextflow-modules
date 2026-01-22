@@ -17,12 +17,16 @@ workflow test_start_stop_spark {
         spark_config,
         params.distributed,
         params.spark_work_dir instanceof String && params.spark_work_dir ? file(params.spark_work_dir) : '',
-        3,   // spark workers
-        3,   // required workers
-        1,   // worker cpus
-        1,   // gb_per_cpu
-        1,   // driver cpus
-        1,   // driver memory in GB
+        3,     // spark workers
+        3,     // required workers
+        1,     // worker cpus
+        1,     // worker mem gb
+        1,     // executor cpus
+        0.5,   // executor mem gb
+        0.2,   // executor memory overhead
+        1,     // driver cpus
+        1,     // driver memory in GB
+        1,     // gb_per_cpu
     )
 
     spark_cluster_info.subscribe {
