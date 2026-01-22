@@ -174,7 +174,7 @@ workflow BIGSTREAM_REGISTRATION {
              global_results_transform,
              global_results_align_output,
              global_results_align_name, global_results_align_subpath,
-             global_fix, global_fix_subpath, 
+             global_fix, global_fix_subpath,
              global_mov, global_mov_subpath,
              global_fix_mask, global_fix_mask_subpath,
              global_mov_mask, global_mov_mask_subpath,
