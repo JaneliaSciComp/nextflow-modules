@@ -28,7 +28,7 @@ process BIGSTITCHER_MODULE {
         /app/app.jar
         ${module_class}
         ${spark.parallelism}
-        ${spark.worker_cores}
+        ${spark.executor_cores}
         "${executor_memory_gb}g"
         ${spark.driver_cores}
         "${driver_memory_gb}g"
