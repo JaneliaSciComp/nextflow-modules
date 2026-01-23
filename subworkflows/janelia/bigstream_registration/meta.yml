@@ -6,7 +6,8 @@ keywords:
   - bigstream
   - dask
 components:
-  - bigstream_globalalign
-  - bigstream_localalign
-  - bigstream_deform
-  - dask_cluster
+  - janelia/bigstream/globalalign
+  - janelia/bigstream/localalign
+  - janelia/bigstream/deform
+  - janelia/dask_start
+  - janelia/dask_stop
