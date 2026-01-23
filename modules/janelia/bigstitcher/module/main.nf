@@ -2,7 +2,7 @@ process BIGSTITCHER_MODULE {
     tag { meta.id }
     container { task.ext.container ?: 'ghcr.io/janeliascicomp/bigstitcher:2.4.1-spark3.3.2-scala2.12-java17-ubuntu24.04' }
     cpus { spark.driver_cores }
-    memory { spark.driver_memory }
+    memory { "${spark.driver_memory as int}g" }
 
     input:
     tuple val(meta), val(spark), val(module_class), val(module_args)

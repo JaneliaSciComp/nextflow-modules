@@ -2,7 +2,7 @@ process RS_FISH {
     tag "${meta.id}"
     container { task && task.ext.container ? task.ext.container : 'ghcr.io/janeliascicomp/rs-fish-spark:8f8954f' }
     cpus { spark.driver_cores }
-    memory { spark.driver_memory }
+    memory { "${spark.driver_memory as int}g" }
 
     input:
     tuple val(meta),
