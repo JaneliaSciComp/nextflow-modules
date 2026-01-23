@@ -16,8 +16,8 @@ process BIGSTITCHER_MODULE {
 
     script:
     def args = module_args ? module_args.join(' ') : ''
-    def executor_memory_gb = spark.executor_memory
-    def driver_memory_gb = spark.driver_memory
+    def executor_memory_gb = spark.executor_memory as int
+    def driver_memory_gb = spark.driver_memory as int
     def app_jar = '/app/app.jar'
     """
     CMD=(

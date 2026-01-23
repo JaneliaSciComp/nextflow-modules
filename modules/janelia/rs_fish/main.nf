@@ -28,8 +28,8 @@ process RS_FISH {
     script:
     def extra_args = task.ext.args ?: ''
     def output_filename = spots_result_name ?: "${meta.id}-points.csv"
-    def executor_memory_gb = spark.executor_memory
-    def driver_memory_gb = spark.driver_memory
+    def executor_memory_gb = spark.executor_memory as int
+    def driver_memory_gb = spark.driver_memory as int
     """
     INPUT_IMG=\$(realpath ${input_image})
     full_spots_dir=\$(readlink -m ${spots_output_dir})
