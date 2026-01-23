@@ -11,3 +11,31 @@ components:
   - janelia/bigstream/deform
   - janelia/dask_start
   - janelia/dask_stop
+output:
+  - global:
+      type: tuple
+      description: |
+        Global alignment results from BIGSTREAM_GLOBALALIGN.
+        Structure: [ val(meta), path(fix_image), val(fix_image_subpath),
+                     path(mov_image), val(mov_image_subpath),
+                     path(transform_dir), val(transform_name),
+                     path(align_dir), val(align_name), val(align_subpath) ]
+  - local:
+      type: tuple
+      description: |
+        Local alignment results from BIGSTREAM_LOCALALIGN.
+        Structure: [ val(meta), path(fix_image), val(fix_image_subpath),
+                     path(mov_image), val(mov_image_subpath),
+                     path(affine_transform),
+                     path(transform_dir),
+                     val(transform_name), val(transform_subpath),
+                     val(inv_transform_name), val(inv_transform_subpath),
+                     path(align_dir), val(align_name), val(align_subpath) ]
+  - cluster:
+      type: tuple
+      description: |
+        Cluster termination signal.
+        Structure: [ val(meta), val(empty_map) ]
+authors:
+  - "@krokicki"
+  - "@cgoina"
