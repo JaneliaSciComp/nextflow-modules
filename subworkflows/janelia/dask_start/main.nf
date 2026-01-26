@@ -253,7 +253,7 @@ process DASK_WAITFORMANAGER {
     output:
     tuple val(meta),
           env(cluster_work_fullpath),
-          env(scheduler_address), 
+          env(scheduler_address),
           env(dashboard_port), emit: cluster_info
     path "versions.yml", emit: versions
 
