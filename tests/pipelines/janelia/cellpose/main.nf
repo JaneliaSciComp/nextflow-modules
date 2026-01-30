@@ -46,7 +46,7 @@ workflow test_distributed_cellpose_with_dask {
         params.cellpose_worker_mem_gb,
     )
 
-    dask_cluster.subscribe {
+    dask_cluster.subscribe { it ->
         log.info "Cluster info: $it"
     }
 

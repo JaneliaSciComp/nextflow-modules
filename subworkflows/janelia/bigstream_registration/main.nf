@@ -160,7 +160,7 @@ workflow BIGSTREAM_REGISTRATION {
         global_align_mem_gb,
     )
 
-    global_align_results.subscribe {
+    global_align_results.view { it ->
         log.debug "Completed global alignment -> $it"
     }
 
@@ -245,45 +245,15 @@ workflow BIGSTREAM_REGISTRATION {
         dask_worker_mem_gb,
     )
 
-    cluster_info.subscribe {
+    cluster_info.view { it ->
         log.debug "Dask cluster -> $it"
     }
 
     def local_align_input = cluster_info
     | join(global_align_results, by: 0)
     | join (registration_input, by: 0)
-    | multiMap {
-        def (meta,
-             cluster_context,
-             global_results_fix, global_results_fix_subpath,
-             global_results_mov, global_results_mov_subpath,
-             global_results_transform_output,
-             global_results_transform,
-             global_results_align_output,
-             global_results_align_name, global_results_align_subpath,
-             global_fix, global_fix_subpath,
-             global_mov, global_mov_subpath,
-             global_fix_mask, global_fix_mask_subpath,
-             global_mov_mask, global_mov_mask_subpath,
-             global_steps,
-             global_transform_output,
-             global_transform_name,
-             global_align_output,
-             global_align_name, global_align_subpath,
-             local_fix, local_fix_subpath,
-             local_mov, local_mov_subpath,
-             local_fix_mask, local_fix_mask_subpath,
-             local_mov_mask, local_mov_mask_subpath,
-             local_steps,
-             local_transform_output,
-             local_transform_name,
-             local_transform_subpath,
-             local_inv_transform_name,
-             local_inv_transform_subpath,
-             local_align_output,
-             local_align_name, local_align_subpath,
-             additional_deformations
-            ) = it
+    | multiMap { it ->
+        def (meta, cluster_context, global_results_fix, global_results_fix_subpath, global_results_mov, global_results_mov_subpath, global_results_transform_output, global_results_transform, global_results_align_output, global_results_align_name, global_results_align_subpath, global_fix, global_fix_subpath, global_mov, global_mov_subpath, global_fix_mask, global_fix_mask_subpath, global_mov_mask, global_mov_mask_subpath, global_steps, global_transform_output, global_transform_name, global_align_output, global_align_name, global_align_subpath, local_fix, local_fix_subpath, local_mov, local_mov_subpath, local_fix_mask, local_fix_mask_subpath, local_mov_mask, local_mov_mask_subpath, local_steps, local_transform_output, local_transform_name, local_transform_subpath, local_inv_transform_name, local_inv_transform_subpath, local_align_output, local_align_name, local_align_subpath, additional_deformations) = it
         def data = [
             meta,
             local_fix ?: [], local_fix_subpath,
@@ -318,7 +288,7 @@ workflow BIGSTREAM_REGISTRATION {
         local_align_mem_gb,
     )
 
-    local_align_results.subscribe {
+    local_align_results.view { it ->
         // [
         //    meta, fix, fix_subpath, mov, mov_subpath,
         //    local_transform_output,
@@ -401,7 +371,7 @@ workflow BIGSTREAM_REGISTRATION {
         local_align_mem_gb,
     )
 
-    additional_deformations_results.subscribe {
+    additional_deformations_results.view { it ->
         log.debug "Completed additional deformation -> $it"
     }
 

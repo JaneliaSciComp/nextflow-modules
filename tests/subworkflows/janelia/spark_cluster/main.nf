@@ -3,6 +3,10 @@ include { SPARK_STOP  } from '../../../../subworkflows/janelia/spark_stop/main.n
 
 params.distributed = true
 
+workflow {
+    test_start_stop_spark()
+}
+
 workflow test_start_stop_spark {
     def spark_cluster_input = [
         [id: 'test_local_spark'],
@@ -29,14 +33,14 @@ workflow test_start_stop_spark {
         1,     // gb_per_cpu
     )
 
-    spark_cluster_info.subscribe {
-        log.info "Cluster info: $it"
+    spark_cluster_info.view { it ->
+        log.debug "test_start_stop_spark: cluster info: $it"
     }
 
     def terminated_cluster = SPARK_STOP(spark_cluster_info, params.distributed)
 
-    terminated_cluster.subscribe {
-        log.info "Terminated cluster info: $it"
+    terminated_cluster.view { it ->
+        log.debug "test_start_stop_spark: terminated cluster info: $it"
     }
 
 }

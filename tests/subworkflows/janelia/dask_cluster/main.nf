@@ -3,6 +3,14 @@ include { DASK_STOP  } from '../../../../subworkflows/janelia/dask_stop/main.nf'
 
 params.distributed = true
 
+workflow {
+    if (params.entry == 'test_start_stop_dask') {
+        test_start_stop_dask()
+    } else if (params.entry == 'test_two_dask_clusters') {
+        test_two_dask_clusters()
+    }
+}
+
 workflow test_start_stop_dask {
     def dask_cluster_input = [
         [id: 'test_local_dask'],
@@ -20,14 +28,14 @@ workflow test_start_stop_dask {
         1.5, // worker mem
     )
 
-    dask_cluster_info.subscribe {
-        log.info "Cluster info: $it"
+    dask_cluster_info.view { it ->
+        log.info "test_start_stop_dask: cluster info: $it"
     }
 
     def terminated_cluster = DASK_STOP(dask_cluster_info)
 
-    terminated_cluster.subscribe {
-        log.info "Terminated cluster info: $it"
+    terminated_cluster.view { it ->
+        log.info "test_start_stop_dask: terminated cluster info: $it"
     }
 
 }
