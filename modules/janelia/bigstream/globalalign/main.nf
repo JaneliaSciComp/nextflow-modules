@@ -59,13 +59,13 @@ process BIGSTREAM_GLOBALALIGN {
     def align_subpath_arg = align_subpath ? "--global-align-subpath ${align_subpath}" : ''
     def align_timeindex_arg = align_timeindex ? "--global-align-timeindex ${align_timeindex}" : ''
     def align_channel_arg = align_channel ? "--global-align-channel ${align_channel}" : ''
-    def bigstream_config_arg = bigstream_config ? "--align-config snapshot-${bigstream_config}" : ''
+    def bigstream_config_arg = bigstream_config ? "--align-config ${bigstream_config}" : ''
     def cp_bigstream_config
     if (bigstream_config) {
         if (transform_dir) {
             cp_bigstream_config = "cp ${bigstream_config} \${full_transform_dir}"
         } else {
-            cp_bigstream_config = "cp ${bigstream_config} global-${bigstream_config}"
+            cp_bigstream_config = "cp ${bigstream_config} ${bigstream_config}"
         }
     } else {
         cp_bigstream_config = ''
