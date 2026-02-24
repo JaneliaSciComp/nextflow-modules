@@ -111,7 +111,7 @@ workflow DASK_START {
 process DASK_PREPARE {
     tag "${meta.id}"
     label 'process_single'
-    container { task.ext.container ?: 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9' }
+    container 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9'
 
     input:
     tuple val(meta), path(data, stageAs: '?/*')
@@ -141,7 +141,7 @@ process DASK_PREPARE {
 process DASK_STARTMANAGER {
     tag "${meta.id}"
     label 'process_long'
-    container { task.ext.container ?: 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9' }
+    container 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9'
 
     input:
     tuple val(meta), path(dask_config), path(cluster_work_dir, stageAs: 'dask_work/*'), path(data, stageAs: '?/*')
@@ -187,7 +187,7 @@ process DASK_STARTMANAGER {
 process DASK_STARTWORKER {
     tag "${meta.id}:${worker_id}"
     label 'process_long'
-    container { task.ext.container ?: 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9' }
+    container 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9'
     cpus { worker_cpus }
     memory "${worker_mem_in_gb} GB"
 
@@ -241,7 +241,7 @@ process DASK_STARTWORKER {
 process DASK_WAITFORMANAGER {
     tag "${meta.id}"
     label 'process_single'
-    container { task.ext.container ?: 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9' }
+    container 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9'
 
     input:
     tuple val(meta), path(cluster_work_dir, stageAs: 'dask_work/*')
@@ -288,7 +288,7 @@ process DASK_WAITFORMANAGER {
 process DASK_WAITFORWORKERS {
     tag "${meta.id}"
     label 'process_single'
-    container { task.ext.container ?: 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9' }
+    container 'ghcr.io/janeliascicomp/dask:2025.5.1-py12-ol9'
 
     input:
     tuple val(meta), path(cluster_work_dir, stageAs: 'dask_work/*'), val(scheduler_address), val(dashboard_port)

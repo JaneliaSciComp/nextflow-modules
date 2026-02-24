@@ -1,7 +1,7 @@
 process BIGSTREAM_TRANSFORMCOORDS {
     tag "${meta.id}"
     container 'ghcr.io/janeliascicomp/bigstream:5.1.2-omezarr-dask2025.11.0-py12-ol9'
-    cpus bigstream_cpus
+    cpus { bigstream_cpus }
     memory "${bigstream_mem_in_gb} GB"
     conda 'modules/janelia/bigstream/conda-env.yml'
 

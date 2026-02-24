@@ -1,5 +1,6 @@
 process BIGSTREAM_FOREGROUNDMASK {
     tag "${meta.id}"
+    label 'process_single'
     container 'ghcr.io/janeliascicomp/bigstream:5.1.2-omezarr-dask2025.11.0-py12-ol9'
     conda 'modules/janelia/bigstream/conda-env.yml'
 
@@ -26,7 +27,6 @@ process BIGSTREAM_FOREGROUNDMASK {
     def mask_arg = mask ? "--output \${full_mask}" : ''
     def mask_subpath_arg = mask_subpath ? "--output-subpath ${mask_subpath}" : ''
     """
-    
     case \$(uname) in
         Darwin)
             detected_os=OSX
