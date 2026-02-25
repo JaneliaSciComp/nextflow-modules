@@ -169,13 +169,16 @@ process DASK_STARTMANAGER {
     echo "Scheduler's environment"
     env
 
-    /opt/scripts/daskscripts/startmanager.sh \
-        --container-engine ${container_engine} \
-        --pid-file ${dask_scheduler_pid_file} \
-        --scheduler-work-dir ${cluster_work_dir} \
-        --scheduler-file ${dask_scheduler_info_file} \
-        --terminate-file ${terminate_file_name} \
+    CMD=(
+        /opt/scripts/daskscripts/startmanager.sh
+        --container-engine ${container_engine}
+        --pid-file ${dask_scheduler_pid_file}
+        --scheduler-work-dir ${cluster_work_dir}
+        --scheduler-file ${dask_scheduler_info_file}
+        --terminate-file ${terminate_file_name}
         ${args}
+    )
+    (exec "\${CMD[@]}")
 
     dask_version=\$(dask --version | grep version | sed "s/.*version\\s*//" )
     cat <<-END_VERSIONS > versions.yml
@@ -221,15 +224,18 @@ process DASK_STARTWORKER {
     echo "Worker's environment"
     env
 
-    /opt/scripts/daskscripts/startworker.sh \
-        --container-engine ${container_engine} \
-        --name ${dask_worker_name} \
-        --worker-dir ${dask_worker_work_dir} \
-        --scheduler-address ${scheduler_address} \
-        --pid-file ${dask_worker_pid_file} \
-        --memory-limit "${worker_mem_in_gb}G" \
-        --terminate-file ${terminate_file_name} \
+    CMD=(
+        /opt/scripts/daskscripts/startworker.sh
+        --container-engine ${container_engine}
+        --name ${dask_worker_name}
+        --worker-dir ${dask_worker_work_dir}
+        --scheduler-address ${scheduler_address}
+        --pid-file ${dask_worker_pid_file}
+        --memory-limit "${worker_mem_in_gb / worker_cpus * (worker_cpus + task.attempt - 1) as int}G"
+        --terminate-file ${terminate_file_name}
         ${args}
+    )
+    (exec "\${CMD[@]}")
 
     dask_version=\$(dask --version | grep version | sed "s/.*version\\s*//" )
     cat <<-END_VERSIONS > versions.yml
@@ -264,9 +270,12 @@ process DASK_WAITFORMANAGER {
     """
     cluster_work_fullpath=\$(readlink ${cluster_work_dir})
 
-    /opt/scripts/daskscripts/waitformanager.sh \
-        --flist "${dask_scheduler_info_file},${terminate_file_name}" \
+    CMD=(
+        /opt/scripts/daskscripts/waitformanager.sh
+        --flist "${dask_scheduler_info_file},${terminate_file_name}"
         ${args}
+    )
+    (exec "\${CMD[@]}")
 
     if [[ -e "${dask_scheduler_info_file}" ]] ; then
         echo "\$(date): Get cluster info from ${dask_scheduler_info_file}"
@@ -304,23 +313,22 @@ process DASK_WAITFORWORKERS {
 
     script:
     def args = task.ext.args ?: ''
-    def container_engine = workflow.containerEngine
-
     def terminate_file_name = "${cluster_work_dir}/terminate-dask"
-
-    cluster_work_fullpath = cluster_work_dir.resolveSymLink().toString()
 
     """
     cluster_work_fullpath=\$(readlink ${cluster_work_dir})
 
     # waitforworkers.sh sets available_workers variable
-    . /opt/scripts/daskscripts/waitforworkers.sh \
-        --cluster-work-dir ${cluster_work_dir} \
-        --scheduler-address ${scheduler_address} \
-        --total-workers ${total_workers} \
-        --required-workers ${required_workers} \
-        --terminate-file ${terminate_file_name} \
+    CMD=(
+        /opt/scripts/daskscripts/waitforworkers.sh
+        --cluster-work-dir ${cluster_work_dir}
+        --scheduler-address ${scheduler_address}
+        --total-workers ${total_workers}
+        --required-workers ${required_workers}
+        --terminate-file ${terminate_file_name}
         ${args}
+    )
+    (exec "\${CMD[@]}")
 
     dask_version=\$(dask --version | grep version | sed "s/.*version\\s*//" )
     cat <<-END_VERSIONS > versions.yml
