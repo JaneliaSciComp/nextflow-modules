@@ -43,7 +43,7 @@ process BIGSTREAM_FOREGROUNDMASK {
     echo "Input image full path: \${full_image}"
 
     full_mask=\$(\${READLINK_TOOL} -m ${mask})
-    full_mask_outputdir = \$(dirname \${full_mask})
+    full_mask_outputdir=\$(dirname \${full_mask})
     if [[ ! -e \${full_mask_outputdir} ]] ; then
         echo "Create output mask directory: \${full_mask_outputdir}"
         mkdir -p \${full_mask_outputdir}
