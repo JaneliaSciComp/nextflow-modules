@@ -43,7 +43,7 @@ process DISTRIBUTEDCELLPOSE {
                                     ? "--output-subpath ${labels_subpath}"
                                     : ''
     def set_models_path = models_path
-        ? "models_fullpath=\$(readlink ${models_path}) && \
+        ? "models_fullpath=\$(\${READLINK_TOOL} ${models_path}) && \
            echo \"Set models path: \${models_fullpath}\" && \
            mkdir -p \${models_fullpath} && \
            export CELLPOSE_LOCAL_MODELS_PATH=\${models_fullpath}"
@@ -68,23 +68,23 @@ process DISTRIBUTEDCELLPOSE {
     case \$(uname) in
         Darwin)
             detected_os=OSX
-            READLINK_MISSING_OPT="readlink"
+            READLINK_TOOL="greadlink"
             ;;
         *)
             detected_os=Linux
-            READLINK_MISSING_OPT="readlink -m"
+            READLINK_TOOL="readlink"
             ;;
     esac
     echo "Detected OS: \${detected_os}"
-    input_image_fullpath=\$(readlink ${image})
+    input_image_fullpath=\$(\${READLINK_TOOL} ${image})
     echo "Input image: \${input_image_fullpath}"
     # create the output directory using the canonical name
-    output_fullpath=\$(\${READLINK_MISSING_OPT} ${output_dir})
+    output_fullpath=\$(\${READLINK_TOOL} -m ${output_dir})
     echo "Output dir: \${output_fullpath}"
     mkdir -p \${output_fullpath}
     echo "Created output dir: \${output_fullpath}"
     # create working directory
-    working_fullpath=\$(\${READLINK_MISSING_OPT} ${working_dirname})
+    working_fullpath=\$(\${READLINK_TOOL} -m ${working_dirname})
     echo "Working dir: \${working_fullpath}"
     full_workingname="\${working_fullpath}/${image_name}${subpath_name}"
     mkdir -p "\${full_workingname}"

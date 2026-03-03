@@ -18,9 +18,20 @@ process PREPARE_BIGSTREAM_DIRS {
     def data_dirs = data_paths.join(' ')
 
     """
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_TOOL="greadlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_TOOL="readlink"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
     list_dirs=(${data_dirs})
     for d in \${list_dirs} ; do
-        canonical_d=\$(readlink -m \${d})
+        canonical_d=\$(\${READLINK_TOOL} -m \${d})
         echo "Create output dir: \${d} -> \${canonical_d}"
         mkdir -p \${canonical_d}
     done

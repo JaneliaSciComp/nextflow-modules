@@ -28,8 +28,19 @@ process OMETIFF_TO_N5 {
     def dask_config_arg = dask_config ? "--dask-config ${dask_config}" : ''
 
     """
-    input_fullpath=\$(readlink ${input_path})
-    output_fullpath=\$(readlink ${output_path})
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_TOOL="greadlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_TOOL="readlink"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
+    input_fullpath=\$(\${READLINK_TOOL} ${input_path})
+    output_fullpath=\$(\${READLINK_TOOL} ${output_path})
     mkdir -p \${output_fullpath}
 
     python /opt/scripts/n5-tools/ometif_to_n5.py \

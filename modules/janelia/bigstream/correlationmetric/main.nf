@@ -33,9 +33,20 @@ process BIGSTREAM_CORRELATIONMETRIC {
     def output_subpath_arg = output_subpath ? "--output-subpath ${output_subpath}" : ''
 
     """
-    fix_fullpath=\$(readlink ${fix_image})
-    mov_fullpath=\$(readlink ${mov_image})
-    output_fullpath=\$(readlink -m ${output_dir})
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_TOOL="greadlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_TOOL="readlink"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
+    fix_fullpath=\$(\${READLINK_TOOL} ${fix_image})
+    mov_fullpath=\$(\${READLINK_TOOL} ${mov_image})
+    output_fullpath=\$(\${READLINK_TOOL} -m ${output_dir})
     mkdir -p \${output_fullpath}
 
     CMD=(

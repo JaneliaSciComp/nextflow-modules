@@ -27,9 +27,20 @@ process N5_MULTISCALE {
     def dask_config_arg = dask_config ? "--dask-config ${dask_config}" : ''
 
     """
+    case \$(uname) in
+        Darwin)
+            detected_os=OSX
+            READLINK_TOOL="greadlink"
+            ;;
+        *)
+            detected_os=Linux
+            READLINK_TOOL="readlink"
+            ;;
+    esac
+    echo "Detected OS: \${detected_os}"
     # resolve the input symlink because
     # links are not followed in python code
-    input_fullpath=\$(readlink ${input_path})
+    input_fullpath=\$(\${READLINK_TOOL} ${input_path})
 
     echo "Build multiscale pyramid for: \${input_fullpath}/${n5_name}"
     python /opt/scripts/n5-tools-dask/n5_multiscale.py \
