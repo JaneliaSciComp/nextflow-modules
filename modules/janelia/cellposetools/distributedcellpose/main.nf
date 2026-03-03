@@ -1,8 +1,8 @@
-process CELLPOSE {
+process DISTRIBUTEDCELLPOSE {
     container { task && task.ext.container ? task.ext.container : 'ghcr.io/janeliascicomp/cellpose:4.0.8-dask2025.11.0-py12' }
-    cpus { cellpose_cpus }
-    memory "${cellpose_mem_in_gb} GB"
-    conda 'modules/janelia/cellpose/conda-env.yml'
+    cpus { cpus }
+    memory "${mem_in_gb} GB"
+    conda 'modules/janelia/cellposetools/conda-env.yml'
 
     input:
     tuple val(meta),
@@ -18,8 +18,8 @@ process CELLPOSE {
           path(dask_config) // this is optional - if undefined pass in as empty list ([])
     path(preprocessing_config) // preprocessing config file
     path(logging_config) // this is optional - if undefined pass in as empty list ([])
-    val(cellpose_cpus)
-    val(cellpose_mem_in_gb)
+    val(cpus)
+    val(mem_in_gb)
 
     output:
     tuple val(meta),

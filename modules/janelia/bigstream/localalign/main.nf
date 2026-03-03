@@ -94,11 +94,11 @@ process BIGSTREAM_LOCALALIGN {
     case \$(uname) in
         Darwin)
             detected_os=OSX
-            READLINK_MISSING_OPT="readlink"
+            READLINK_TOOL="greadlink"
             ;;
         *)
             detected_os=Linux
-            READLINK_MISSING_OPT="readlink -m"
+            READLINK_TOOL="readlink"
             ;;
     esac
     echo "Detected OS: \${detected_os}"
@@ -125,7 +125,7 @@ process BIGSTREAM_LOCALALIGN {
     fi
 
     if [[ "${transform_dir}" != "" ]] ; then
-        full_transform_dir=\$(\${READLINK_MISSING_OPT} ${transform_dir})
+        full_transform_dir=\$(\${READLINK_TOOL} -m ${transform_dir})
         if [[ ! -e \${full_transform_dir} ]] ; then
             echo "Create transform directory: \${full_transform_dir}"
             mkdir -p \${full_transform_dir}
@@ -155,7 +155,7 @@ process BIGSTREAM_LOCALALIGN {
     fi
 
     if [[ "${align_dir}" != "" ]] ; then
-        full_align_dir=\$(\${READLINK_MISSING_OPT} ${align_dir})
+        full_align_dir=\$(\${READLINK_TOOL} -m ${align_dir})
         if [[ ! -e \${full_align_dir} ]] ; then
             echo "Create align directory: \${full_align_dir}"
             mkdir -p \${full_align_dir}
