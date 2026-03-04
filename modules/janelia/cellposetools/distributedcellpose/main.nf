@@ -2,7 +2,7 @@ process DISTRIBUTEDCELLPOSE {
     container { task && task.ext.container ? task.ext.container : 'ghcr.io/janeliascicomp/cellpose:4.0.8-dask2025.11.0-py12' }
     cpus { cpus }
     memory "${mem_in_gb} GB"
-    conda 'modules/janelia/cellposetools/conda-env.yml'
+    conda "${moduleDir}/conda-env.yml"
 
     input:
     tuple val(meta),
