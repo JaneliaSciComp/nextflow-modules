@@ -1,4 +1,4 @@
-process SEGTOOLS_DISTTRIBUTED_MERGELABELS {
+process SEGTOOLS_DISTRIBUTED_MERGELABELS {
     tag "${meta.id}"
     container 'ghcr.io/janeliascicomp/cellpose:4.0.8-dask2025.11.0-py12'
     cpus { cpus }
