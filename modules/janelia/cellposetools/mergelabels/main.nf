@@ -22,8 +22,8 @@ process MERGELABELS {
           env('input_labels_fullpath'),
           val(input_subpath),
           env('output_labels_fullpath'),
-          val(output_subpath ?: input_subpath), emit: results
-    path('versions.yml')                      , emit: versions
+          val("${output_subpath ?: input_subpath}"), emit: results
+    path('versions.yml')                           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -33,7 +33,7 @@ process MERGELABELS {
     def input_subpath_arg = input_subpath
                                ? "--input-subpath ${input_subpath}"
                                : ''
-    def set_output_labels = output_labels ? "output_labels_fullpath=\$(\${READLINK_TOOL} -m ${output_labels})" : ''
+    def set_output_labels = output_labels ? "output_labels_fullpath=\$(\${READLINK_TOOL} -m ${output_labels})" : 'output_labels_fullpath='
     def output_labels_arg = output_labels ? "-o \${output_labels_fullpath}" : ''
     def output_subpath_arg = output_subpath
                                ? "--output-subpath ${output_subpath}"
@@ -57,11 +57,14 @@ process MERGELABELS {
     ${set_output_labels}
     input_labels_fullpath=\$(\${READLINK_TOOL} -m ${input_labels})
     echo "Input labels: \${input_labels_fullpath}"
+
     if [[ -z "\${output_labels_fullpath}" ]]; then
-        output_labels_fullpath=\${input_labels_fullpath}
+        echo "set output_labels_fullpath=\${input_labels_fullpath}"
+        output_labels_fullpath="\${input_labels_fullpath}"
     else
         mkdir -p \$(dirname \${output_labels_fullpath})
     fi
+
     echo "Output labels: \${output_labels_fullpath}"
 
     CMD=(
