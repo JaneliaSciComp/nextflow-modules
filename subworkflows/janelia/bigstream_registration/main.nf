@@ -28,7 +28,6 @@ process PREPARE_BIGSTREAM_DIRS {
             READLINK_TOOL="readlink"
             ;;
     esac
-    echo "Detected OS: \${detected_os}"
     list_dirs=(${data_dirs})
     for d in \${list_dirs} ; do
         canonical_d=\$(\${READLINK_TOOL} -m \${d})

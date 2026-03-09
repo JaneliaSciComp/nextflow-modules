@@ -38,7 +38,6 @@ process OMETIFF_TO_N5 {
             READLINK_TOOL="readlink"
             ;;
     esac
-    echo "Detected OS: \${detected_os}"
     input_fullpath=\$(\${READLINK_TOOL} ${input_path})
     output_fullpath=\$(\${READLINK_TOOL} ${output_path})
     mkdir -p \${output_fullpath}

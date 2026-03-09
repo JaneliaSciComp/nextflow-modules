@@ -37,7 +37,6 @@ process N5_MULTISCALE {
             READLINK_TOOL="readlink"
             ;;
     esac
-    echo "Detected OS: \${detected_os}"
     # resolve the input symlink because
     # links are not followed in python code
     input_fullpath=\$(\${READLINK_TOOL} ${input_path})
