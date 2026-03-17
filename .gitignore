@@ -13,3 +13,4 @@ tests/data/
 __pycache__
 *.pyo
 *.pyc
+.claude/
