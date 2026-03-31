@@ -11,6 +11,8 @@ process SEGTOOLS_DISTRIBUTED_CELLPOSE {
           val(image_subpath),
           path(models_path, stageAs: 'cellpose-models/*'), // this is optional - if undefined pass in as empty list ([])
           val(model_name), // model name
+          path(mask, stageAs: 'cellpose-mask/*'), // this is optional
+          val(mask_subpath),
           path(output_dir),
           val(labels),
           val(labels_subpath),
@@ -54,6 +56,8 @@ process SEGTOOLS_DISTRIBUTED_CELLPOSE {
     def models_path_arg = models_path ? "--models-dir \${models_fullpath}" : ''
     def model_name_arg = model_name ? "--model ${model_name}": ''
     def subpath_name = image_subpath ? "/${image_subpath.split('/')[-1]}" : ''
+    def mask_arg = mask ? "--mask \$(\${READLINK_TOOL} ${mask})" : ''
+    def mask_subpath_arg = mask_subpath ? "--mask-subpath ${mask_subpath}" : ''
     def working_dirname = working_dir ? working_dir : output_dir
     def labels_image = labels ?: ''
     def dask_scheduler_arg = dask_scheduler ? "--dask-scheduler ${dask_scheduler}" : ''
@@ -102,6 +106,8 @@ process SEGTOOLS_DISTRIBUTED_CELLPOSE {
         --working-dir \${full_workingname}
         ${models_path_arg}
         ${model_name_arg}
+        ${mask_arg}
+        ${mask_subpath_arg}
         ${dask_scheduler_arg}
         ${dask_config_arg}
         ${preprocessing_config_arg}

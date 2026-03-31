@@ -30,6 +30,13 @@ input:
   - model_name:
       type: string
       description: The name of the cellpose model.
+  - mask:
+      type: string
+      description: |
+        Optional path to a mask that can be used to select a subvolume to be segmented with cellpose. If this is not specified pass in as empty list.
+  - mask_subpath:
+      type: string
+      description: The mask subpath.
   - output_dir:
       type: directory
       description: Directory location of the output image container
