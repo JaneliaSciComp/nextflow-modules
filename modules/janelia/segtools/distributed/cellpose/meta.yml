@@ -23,13 +23,6 @@ input:
   - image_subpath:
       type: string
       description: Relative path to the image dataset if needed (for N5 or zarr containers)
-  - models_path:
-      type: directory
-      description: |
-        Optional path to the cellpose models cache directory. If this is not specified pass in as empty list.
-  - model_name:
-      type: string
-      description: The name of the cellpose model.
   - mask:
       type: string
       description: |
@@ -37,6 +30,13 @@ input:
   - mask_subpath:
       type: string
       description: The mask subpath.
+  - models_path:
+      type: directory
+      description: |
+        Optional path to the cellpose models cache directory. If this is not specified pass in as empty list.
+  - model_name:
+      type: string
+      description: The name of the cellpose model.
   - output_dir:
       type: directory
       description: Directory location of the output image container

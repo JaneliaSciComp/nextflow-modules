@@ -9,10 +9,10 @@ process SEGTOOLS_DISTRIBUTED_CELLPOSE {
     tuple val(meta),
           path(image, stageAs: 'cellpose-input/*'),
           val(image_subpath),
-          path(models_path, stageAs: 'cellpose-models/*'), // this is optional - if undefined pass in as empty list ([])
-          val(model_name), // model name
           path(mask, stageAs: 'cellpose-mask/*'), // this is optional
           val(mask_subpath),
+          path(models_path, stageAs: 'cellpose-models/*'), // this is optional - if undefined pass in as empty list ([])
+          val(model_name), // model name
           path(output_dir),
           val(labels),
           val(labels_subpath),
