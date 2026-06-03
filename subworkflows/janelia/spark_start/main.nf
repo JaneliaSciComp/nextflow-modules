@@ -1,7 +1,7 @@
 process PREPARE_SPARK_CONFIG {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), path(spark_local_dir)
@@ -52,7 +52,7 @@ process PREPARE_SPARK_CONFIG {
 process SPARK_STARTMANAGER {
     tag "${meta.id}"
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), path(spark_local_dir)
@@ -102,7 +102,7 @@ process SPARK_STARTMANAGER {
 process SPARK_WAITFORMANAGER {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
     errorStrategy { task.exitStatus == 2
         ? 'retry' // retry on a timeout to prevent the case when the waiter is started before the master and master never gets its chance
         : 'terminate'
@@ -148,7 +148,7 @@ process SPARK_WAITFORMANAGER {
 process SPARK_STARTWORKER {
     tag "${meta.id}:${worker_id}"
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
     cpus { spark.worker_cpus }
     memory { "${spark.worker_memory}g" }
 
@@ -195,20 +195,18 @@ process SPARK_STARTWORKER {
     """
 }
 
-process SPARK_WAITFORWORKER {
-    tag "${meta.id}:${worker_id}"
+process SPARK_WAITFORWORKERS {
+    tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
-    // retry on a timeout to prevent the case when the waiter is started
-    // before the worker and the worker never gets its chance
-    errorStrategy { task.exitStatus == 2 ? 'retry' : 'terminate' }
-    maxRetries 20
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
 
     input:
-    tuple val(meta), val(spark), path(spark_work_dir), val(worker_id)
+    tuple val(meta), val(spark), path(spark_work_dir)
+    val total_workers
+    val required_workers
 
     output:
-    tuple val(meta), val(spark), env('full_spark_work_dir'), val(worker_id)
+    tuple val(meta), val(spark), env('full_spark_work_dir'), env('available_workers')
 
     when:
     task.ext.when == null || task.ext.when
@@ -216,7 +214,6 @@ process SPARK_WAITFORWORKER {
     script:
     def sleep_secs = task.ext.sleep_secs ?: '1'
     def max_wait_secs = task.ext.max_wait_secs ?: '3600'
-    def spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
     def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
     """
     set +x
@@ -224,22 +221,25 @@ process SPARK_WAITFORWORKER {
     ${set_spark_work_dir(spark_work_dir)}
 
     CMD=(
-        /opt/scripts/waitforworker.sh
-        "${spark.uri}"
-        "$spark_worker_log_file"
-        "$terminate_file_name"
-        $sleep_secs
-        $max_wait_secs
+        /opt/scripts/waitforworkers.sh
+        --spark-work-dir \${full_spark_work_dir}
+        --worker-start-timeout ${max_wait_secs}
+        --worker-poll-interval ${sleep_secs}
+        --total-workers ${total_workers}
+        --required-workers ${required_workers}
+        --terminate-file ${terminate_file_name}
+        --spark-uri ${spark.uri}
     )
     echo "CMD: \${CMD[@]}"
     (exec "\${CMD[@]}")
+    available_workers=\$(cat "\${full_spark_work_dir}/available_workers.txt") 
     """
 }
 
 process SPARK_CLEANUP {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:3.3.2-scala2.12-java17-ubuntu24.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -337,7 +337,7 @@ workflow SPARK_START {
 
     def prepare_config_results = PREPARE_SPARK_CONFIG(spark_inputs, spark_config)
 
-    if (spark_cluster) {
+    if (Boolean.valueOf(spark_cluster)) {
         // start the Spark manager
         // this runs indefinitely until SPARK_TERMINATE is called
         SPARK_STARTMANAGER(
@@ -349,14 +349,19 @@ workflow SPARK_START {
         // SPARK_WAITFORMANAGER only needs spark_work_dir (no spark_local_dir)
         def wait_manager_results = SPARK_WAITFORMANAGER(prepare_config_results.spark_inputs)
 
-        // prepare all arguments for all workers
-        // spark_local_dir is carried in spark.local_dir since SPARK_WAITFORMANAGER does not output it
-        def meta_workers_with_data = wait_manager_results
+        def spark_workers_common_input = wait_manager_results
             .join(ch_meta, by:0) // join with ch_meta to get the data files in order to mount them in the workers
-            .flatMap { it ->
+            .map { it ->
                 def (meta, spark, spark_work_dir, spark_uri, data_paths) = it
                 log.debug "Spark manager available: ${meta}: ${spark} using spark work dir: ${spark_work_dir}"
                 spark.uri = spark_uri
+                [ meta, spark, spark_work_dir, data_paths ]
+            }
+
+        // prepare all arguments for each worker
+        def meta_workers_with_data = spark_workers_common_input
+            .flatMap { it ->
+                def (meta, spark, spark_work_dir, data_paths) = it
                 def worker_list = 1..spark.workers
                 worker_list.collect { worker_id ->
                     [ meta, spark, spark_work_dir, spark.local_dir, worker_id, data_paths ]
@@ -366,7 +371,6 @@ workflow SPARK_START {
                 def (meta, spark, spark_work_dir, spark_local_dir, worker_id, data_paths) = it
                 log.debug "Spark worker input: $it"
                 start_worker: [ meta, spark, spark_work_dir, spark_local_dir, worker_id ]
-                wait_worker:  [ meta, spark, spark_work_dir, worker_id ]
                 data: data_paths
             }
 
@@ -378,7 +382,8 @@ workflow SPARK_START {
         )
 
         // SPARK_STARTWORKER output: [ meta, spark, full_spark_work_dir, worker_id ]
-        def spark_cleanup_input = spark_workers_results.groupTuple(by:[0,1,2], size: n_spark_workers)
+        def spark_cleanup_input = spark_workers_results
+        .groupTuple(by:[0,1,2], size: n_spark_workers)
         .map { it ->
             def (meta, spark, spark_work_dir, _worker_ids) = it
             [ meta, spark, spark_work_dir ]
@@ -390,14 +395,18 @@ workflow SPARK_START {
         def needed_workers = min_workers <= 0 || min_workers > n_spark_workers
                                 ? n_spark_workers
                                 : min_workers
-        spark_context = SPARK_WAITFORWORKER(meta_workers_with_data.wait_worker)
-            .groupTuple(by: [0,1], size: needed_workers)
-            .map { it ->
-                def (meta, spark, _spark_work_dirs, _worker_ids) = it
-                log.debug "Create distributed Spark context: ${meta}, ${spark}"
+        spark_context = SPARK_WAITFORWORKERS(
+            spark_workers_common_input.map { it -> it[0..-2] /* do not include the data_paths */ },
+            n_spark_workers,
+            needed_workers
+        )
+        .map { it ->
+            def (meta, spark, _spark_work_dirs, available_workers) = it
+                log.debug "Create distributed Spark context: ${meta}, ${spark} with ${available_workers} workers"
                 [ meta, spark ]
-            }
+        }
     } else {
+        log.debug "Use local spark"
         // when running locally, the driver needs enough resources to run a spark worker
         spark_context = prepare_config_results.spark_inputs.map { it ->
             def (meta, spark, _spark_work_dir) = it

@@ -10,7 +10,7 @@ workflow DASK_START {
     dask_worker_mem_gb // int: worker memory in GB
 
     main:
-    if (distributed) {
+    if (Boolean.valueOf(distributed)) {
         // prepare dask cluster work dir meta -> [ meta, cluster_work_dir ]
         def dask_work_dir
         if (dask_work_path) {

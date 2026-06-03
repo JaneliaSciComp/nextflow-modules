@@ -23,7 +23,7 @@ workflow test_start_stop_spark {
         params.spark_work_dir instanceof String && params.spark_work_dir ? file(params.spark_work_dir) : '',
         '',    // spark local dir
         3,     // spark workers
-        3,     // required workers
+        2,     // required workers
         1,     // worker cpus
         1,     // worker mem gb
         1,     // executor cpus
