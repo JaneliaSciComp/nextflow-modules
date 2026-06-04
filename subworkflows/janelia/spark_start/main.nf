@@ -152,17 +152,15 @@ process SPARK_CLEANUP {
 }
 
 process SPARK_RUNAPP {
-    tag "${meta.id}:${main_class}"
+    tag "${meta.id}:${app_main_class}"
     label 'process_long'
     container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
     cpus   { spark.driver_cpus }
     memory { "${spark.driver_memory}g" }
 
     input:
-    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_file)
-    val(main_class)
-    val(app_args)            // String: caller-formatted shell args for the driver main
-    val(extra_spark_conf)    // Map<String,String> of extra --conf overrides (may be null/empty)
+    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_file), val(app_main_class), val(app_args), val(app_spark_conf)
+    path(data_files, stageAs: "?/*") // this is passed with the intention of mounting data files inside the container
 
     output:
     tuple val(meta), val(spark)
@@ -171,8 +169,8 @@ process SPARK_RUNAPP {
     task.ext.when == null || task.ext.when
 
     script:
-    additional_spark_conf_args = extra_spark_conf
-        ? extra_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ')
+    app_spark_conf_args = app_spark_conf
+        ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ')
         : ''
     executor_memory_str = spark.executor_memory instanceof Integer
         ? "${spark.executor_memory}g"

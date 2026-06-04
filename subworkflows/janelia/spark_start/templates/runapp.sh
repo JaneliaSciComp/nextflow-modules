@@ -12,7 +12,7 @@ esac
 full_spark_work_dir=\$(\${READLINK_TOOL} -m ${spark_work_dir})
 spark_config_filepath="\${full_spark_work_dir}/spark-defaults.conf"
 
-echo "Starting Spark driver with main class ${main_class}"
+echo "Starting Spark driver with main class ${app_main_class}"
 
 # Initialize the environment for Spark
 export SPARK_ENV_LOADED=
@@ -54,10 +54,10 @@ CMD=(
     org.apache.spark.deploy.SparkSubmit
     "\${spark_cluster_params[@]}"
     --master ${spark.uri}
-    --class ${main_class}
+    --class ${app_main_class}
     --conf spark.files.openCostInBytes=0
     "\${parallelism_conf[@]}"
-    ${additional_spark_conf_args}
+    ${app_spark_conf_args}
     --executor-cores ${spark.executor_cpus}
     --executor-memory ${executor_memory_str}
     --driver-cores ${spark.driver_cpus}
