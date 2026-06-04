@@ -1,7 +1,7 @@
 process PREPARE_SPARK_CONFIG {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), path(spark_local_dir)
@@ -57,7 +57,7 @@ process PREPARE_SPARK_CONFIG {
 process SPARK_STARTMANAGER {
     tag "${meta.id}"
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir), path(spark_local_dir)
@@ -75,7 +75,7 @@ process SPARK_STARTMANAGER {
 process SPARK_WAITFORMANAGER {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
     errorStrategy { task.exitStatus == 2
         ? 'retry' // retry on a timeout to prevent the case when the waiter is started before the master and master never gets its chance
         : 'terminate'
@@ -98,7 +98,7 @@ process SPARK_WAITFORMANAGER {
 process SPARK_STARTWORKER {
     tag "${meta.id}:${worker_id}"
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
     cpus { spark.worker_cpus }
     memory { "${spark.worker_memory}g" }
 
@@ -119,7 +119,7 @@ process SPARK_STARTWORKER {
 process SPARK_WAITFORWORKERS {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -139,7 +139,7 @@ process SPARK_WAITFORWORKERS {
 process SPARK_CLEANUP {
     tag "${meta.id}"
     label 'process_single'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
 
     input:
     tuple val(meta), val(spark), path(spark_work_dir)
@@ -154,7 +154,7 @@ process SPARK_CLEANUP {
 process SPARK_RUNAPP {
     tag "${meta.id}:${app_main_class}"
     label 'process_long'
-    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu24.04'
     cpus   { spark.driver_cpus }
     memory { "${spark.driver_memory}g" }
 

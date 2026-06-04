@@ -59,7 +59,7 @@ set +x
 # Ensure that Spark process dies if this script is interrupted
 function cleanup() {
     echo "Killing background processes"
-    [[ \$spid ]] && kill "\$spid"
+    [[ \$spid ]] && kill -9 "\$spid"
     exit 0
 }
 trap cleanup INT TERM EXIT

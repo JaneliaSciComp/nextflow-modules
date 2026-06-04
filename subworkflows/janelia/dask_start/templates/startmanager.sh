@@ -19,7 +19,7 @@ function cleanup() {
     echo "Killing scheduler background processes"
     if [[ -f "\${scheduler_pid_file}" ]]; then
         local dpid=\$(cat "\${scheduler_pid_file}")
-        kill "\$dpid" || true
+        kill -9 "\$dpid" || true
     fi
     exit 0
 }
