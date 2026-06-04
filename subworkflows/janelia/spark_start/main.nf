@@ -159,7 +159,7 @@ process SPARK_RUNAPP {
     memory { "${spark.driver_memory}g" }
 
     input:
-    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_path), val(defalt_app_jar), val(app_spark_conf), val(app_main_class), val(app_args)
+    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_path), val(default_app_jar), val(app_spark_conf), val(app_main_class), val(app_args)
     path(data_files, stageAs: "?/*") // this is passed with the intention of mounting data files inside the container
 
     output:
