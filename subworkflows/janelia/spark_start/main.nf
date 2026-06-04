@@ -159,7 +159,7 @@ process SPARK_RUNAPP {
     memory { "${spark.driver_memory}g" }
 
     input:
-    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_file), val(app_main_class), val(app_args), val(app_spark_conf)
+    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_path), val(defalt_app_jar), val(app_spark_conf), val(app_main_class), val(app_args)
     path(data_files, stageAs: "?/*") // this is passed with the intention of mounting data files inside the container
 
     output:
@@ -169,15 +169,11 @@ process SPARK_RUNAPP {
     task.ext.when == null || task.ext.when
 
     script:
-    app_spark_conf_args = app_spark_conf
-        ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ')
-        : ''
-    executor_memory_str = spark.executor_memory instanceof Integer
-        ? "${spark.executor_memory}g"
-        : "${(spark.executor_memory * 1024) as int}m"
-    driver_memory_str = spark.driver_memory instanceof Integer
-        ? "${spark.driver_memory}g"
-        : "${(spark.driver_memory * 1024) as int}m"
+    def app_jar = app_jar_path ? "${app_jar_path}" : default_app_jar
+    def app_spark_conf_args = app_spark_conf ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ') : ''
+    def executor_memory_gb = spark.executor_memory as int
+    def driver_memory_gb = spark.driver_memory as int
+    log.debug "Run spark app using jar file: ${app_jar}, spark config: ${app_spark_conf_args}, executor memory: ${executor_memory_gb}, driver memory: ${driver_memory_gb}"
     template 'runapp.sh'
 }
 

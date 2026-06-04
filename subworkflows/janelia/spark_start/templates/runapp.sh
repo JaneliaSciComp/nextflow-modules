@@ -57,17 +57,17 @@ CMD=(
     --class ${app_main_class}
     --conf spark.files.openCostInBytes=0
     "\${parallelism_conf[@]}"
-    ${app_spark_conf_args}
     --executor-cores ${spark.executor_cpus}
-    --executor-memory ${executor_memory_str}
+    --executor-memory "${executor_memory_gb}g"
     --driver-cores ${spark.driver_cpus}
-    --driver-memory ${driver_memory_str}
-    "${app_jar_file}"
-    --conf "spark.driver.extraClassPath=${app_jar_file}"
-    --conf "spark.executor.extraClassPath=${app_jar_file}"
+    --driver-memory "${driver_memory_gb}g"
+    --conf "spark.driver.extraClassPath=${app_jar}"
+    --conf "spark.executor.extraClassPath=${app_jar}"
     --conf "spark.jars.ivy=\${full_spark_work_dir}"
     --conf "spark.driver.extraJavaOptions=-Dnative.libpath.verbose=true"
-    ${app_args}
+    ${app_spark_conf_args}
+    "${app_jar}"
+    ${app_args ? app_args.join(' ') : ''}
 )
 
 echo "CMD: \${CMD[@]}"
