@@ -169,7 +169,7 @@ process SPARK_RUNAPP {
     task.ext.when == null || task.ext.when
 
     script:
-    def app_jar = app_jar_path ? "${app_jar_path}" : default_app_jar
+    def app_jar = "${app_jar_path ?: default_app_jar}"
     def app_spark_conf_args = app_spark_conf ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ') : ''
     def executor_memory_gb = spark.executor_memory as int
     def driver_memory_gb = spark.driver_memory as int
