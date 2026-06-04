@@ -169,10 +169,10 @@ process SPARK_RUNAPP {
     task.ext.when == null || task.ext.when
 
     script:
-    def app_jar = "${app_jar_path ?: default_app_jar}"
-    def app_spark_conf_args = app_spark_conf ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ') : ''
-    def executor_memory_gb = spark.executor_memory as int
-    def driver_memory_gb = spark.driver_memory as int
+    app_jar = "${app_jar_path ?: default_app_jar}"
+    app_spark_conf_args = app_spark_conf ? app_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ') : ''
+    executor_memory_gb = spark.executor_memory as int
+    driver_memory_gb = spark.driver_memory as int
     log.debug "Run spark app using jar file: ${app_jar}, spark config: ${app_spark_conf_args}, executor memory: ${executor_memory_gb}, driver memory: ${driver_memory_gb}"
     template 'runapp.sh'
 }
