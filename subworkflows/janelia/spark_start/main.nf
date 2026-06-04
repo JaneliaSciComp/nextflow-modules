@@ -12,7 +12,6 @@ process PREPARE_SPARK_CONFIG {
     env('spark_config_filepath')                           , emit: spark_config_file
 
     script:
-
     if (spark.executor_cpus > 0) {
         spark_config['spark.executor.cores'] = spark.executor_cpus
     }
@@ -20,7 +19,6 @@ process PREPARE_SPARK_CONFIG {
         spark_config['spark.executor.memory'] = spark.executor_memory instanceof Integer
             ? "${spark.executor_memory}g"
             : "${spark.executor_memory * 1024 as int}m"
-
     }
     if (spark.executor_memory_overhead > 0) {
         spark_config['spark.executor.memoryOverhead'] = spark.executor_memory_overhead instanceof Integer
@@ -32,17 +30,24 @@ process PREPARE_SPARK_CONFIG {
         "${acc}\n${k}=${v}"
     }
     """
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
-    ${set_spark_local_dir(spark_local_dir)}
+    # Prepare the Spark working directory and write spark-defaults.conf.
 
-    if [[ ! -e \${full_spark_work_dir} ]] ; then
+    case \$(uname) in
+        Darwin) READLINK_TOOL="greadlink" ;;
+        *)      READLINK_TOOL="readlink"  ;;
+    esac
+    full_spark_work_dir=\$(\${READLINK_TOOL} -m ${spark_work_dir})
+    spark_local_tmp_dir="${spark_local_dir ? spark_local_dir : '/tmp'}"
+    full_spark_local_dir="\$(\${READLINK_TOOL} -m \${spark_local_tmp_dir})/spark-${workflow.sessionId}"
+    spark_config_filepath="\${full_spark_work_dir}/spark-defaults.conf"
+
+    if [[ ! -e \${full_spark_work_dir} ]]; then
         echo "Create spark work directory ${spark_work_dir} -> \${full_spark_work_dir}"
         mkdir -p \${full_spark_work_dir}
     else
         echo "Spark work directory: \${full_spark_work_dir} - already exists"
     fi
-    spark_config_filepath="\${full_spark_work_dir}/spark-defaults.conf"
+
     echo "Create spark config file \${spark_config_filepath}"
     echo "${spark_config_content}" > \${spark_config_filepath}
     echo "spark.local.dir=\${full_spark_local_dir}" >> \${spark_config_filepath}
@@ -64,39 +69,7 @@ process SPARK_STARTMANAGER {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def sleep_secs = task.ext.sleep_secs ?: '1'
-    def spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
-    def spark_master_log_file = "\${full_spark_work_dir}/sparkmaster.log"
-    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    def container_engine = workflow.containerEngine
-    """
-    set +x
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
-    ${set_spark_local_dir(spark_local_dir)}
-
-    if [[ ! -e \${full_spark_work_dir} ]] ; then
-        echo "Create spark work directory ${spark_work_dir} -> \${full_spark_work_dir}"
-        mkdir -p \${full_spark_work_dir}
-    else
-        echo "Spark work directory: \${full_spark_work_dir} - already exists"
-    fi
-
-    CMD=(
-        /opt/scripts/startmanager.sh
-        "\${full_spark_local_dir}"
-        "\${full_spark_work_dir}"
-        "$spark_master_log_file"
-        "$spark_config_filepath"
-        "$terminate_file_name"
-        "$args"
-        $sleep_secs
-        $container_engine
-    )
-    echo "CMD: \${CMD[@]}"
-    (exec "\${CMD[@]}")
-    """
+    template 'startmanager.sh'
 }
 
 process SPARK_WAITFORMANAGER {
@@ -119,30 +92,7 @@ process SPARK_WAITFORMANAGER {
     task.ext.when == null || task.ext.when
 
     script:
-    def sleep_secs = task.ext.sleep_secs ?: '1'
-    def max_wait_secs = task.ext.max_wait_secs ?: '3600'
-    def spark_master_log_name = "\${full_spark_work_dir}/sparkmaster.log"
-    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    """
-    set +x
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
-
-    CMD=(
-        /opt/scripts/waitformanager.sh
-        "$spark_master_log_name"
-        "$terminate_file_name"
-        $sleep_secs
-        $max_wait_secs
-    )
-
-    echo "CMD: \${CMD[@]}"
-    (exec "\${CMD[@]}")
-
-    spark_uri=\$(cat spark_uri)
-
-    echo "Export spark URI: \${spark_uri}"
-    """
+    template 'waitformanager.sh'
 }
 
 process SPARK_STARTWORKER {
@@ -163,36 +113,7 @@ process SPARK_STARTWORKER {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def sleep_secs = task.ext.sleep_secs ?: '1'
-    def spark_worker_log_file = "\${full_spark_work_dir}/sparkworker-${worker_id}.log"
-    def spark_config_filepath = "\${full_spark_work_dir}/spark-defaults.conf"
-    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    def worker_memory_gb = spark.worker_memory
-    def container_engine = workflow.containerEngine
-    """
-    set +x
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
-    ${set_spark_local_dir(spark_local_dir)}
-
-    CMD=(
-        /opt/scripts/startworker.sh
-        "\${full_spark_work_dir}"
-        "${spark.uri}"
-        "$worker_id"
-        "${spark.worker_cpus}"
-        "${worker_memory_gb}"
-        "$spark_worker_log_file"
-        "$spark_config_filepath"
-        "$terminate_file_name"
-        "$args"
-        "$sleep_secs"
-        "$container_engine"
-    )
-    echo "CMD: \${CMD[@]}"
-    (exec "\${CMD[@]}")
-    """
+    template 'startworker.sh'
 }
 
 process SPARK_WAITFORWORKERS {
@@ -212,28 +133,7 @@ process SPARK_WAITFORWORKERS {
     task.ext.when == null || task.ext.when
 
     script:
-    def sleep_secs = task.ext.sleep_secs ?: '1'
-    def max_wait_secs = task.ext.max_wait_secs ?: '3600'
-    def terminate_file_name = "\${full_spark_work_dir}/terminate-spark"
-    """
-    set +x
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
-
-    CMD=(
-        /opt/scripts/waitforworkers.sh
-        --spark-work-dir \${full_spark_work_dir}
-        --worker-start-timeout ${max_wait_secs}
-        --worker-poll-interval ${sleep_secs}
-        --total-workers ${total_workers}
-        --required-workers ${required_workers}
-        --terminate-file ${terminate_file_name}
-        --spark-uri ${spark.uri}
-    )
-    echo "CMD: \${CMD[@]}"
-    (exec "\${CMD[@]}")
-    available_workers=\$(cat "\${full_spark_work_dir}/available_workers.txt") 
-    """
+    template 'waitforworkers.sh'
 }
 
 process SPARK_CLEANUP {
@@ -248,12 +148,39 @@ process SPARK_CLEANUP {
     tuple val(meta), val(spark)
 
     script:
-    """
-    ${set_readlink_tool()}
-    ${set_spark_work_dir(spark_work_dir)}
+    template 'cleanup.sh'
+}
 
-    find \${full_spark_work_dir} -name app.jar -exec rm {} \\;
-    """
+process SPARK_RUNAPP {
+    tag "${meta.id}:${main_class}"
+    label 'process_long'
+    container 'ghcr.io/janeliascicomp/spark:4.1.2-scala2.13-java21-ubuntu26.04'
+    cpus   { spark.driver_cpus }
+    memory { "${spark.driver_memory}g" }
+
+    input:
+    tuple val(meta), val(spark), path(spark_work_dir), path(app_jar_file)
+    val(main_class)
+    val(app_args)            // String: caller-formatted shell args for the driver main
+    val(extra_spark_conf)    // Map<String,String> of extra --conf overrides (may be null/empty)
+
+    output:
+    tuple val(meta), val(spark)
+
+    when:
+    task.ext.when == null || task.ext.when
+
+    script:
+    additional_spark_conf_args = extra_spark_conf
+        ? extra_spark_conf.collect { k, v -> "--conf '${k}=${v}'" }.join(' ')
+        : ''
+    executor_memory_str = spark.executor_memory instanceof Integer
+        ? "${spark.executor_memory}g"
+        : "${(spark.executor_memory * 1024) as int}m"
+    driver_memory_str = spark.driver_memory instanceof Integer
+        ? "${spark.driver_memory}g"
+        : "${(spark.driver_memory * 1024) as int}m"
+    template 'runapp.sh'
 }
 
 /**
@@ -422,34 +349,4 @@ workflow SPARK_START {
 
     emit:
     spark_context // channel: [ val(meta), val(spark) ]
-}
-
-def set_readlink_tool() {
-    """
-    case \$(uname) in
-        Darwin)
-            detected_os=OSX
-            READLINK_TOOL="greadlink"
-            ;;
-        *)
-            detected_os=Linux
-            READLINK_TOOL="readlink"
-            ;;
-    esac
-    """
-}
-
-def set_spark_work_dir(spark_work_dir) {
-    """
-    full_spark_work_dir=\$(\${READLINK_TOOL} -m ${spark_work_dir})
-    """
-}
-
-def set_spark_local_dir(spark_local_dir) {
-    def spark_local_session_dir = spark_local_dir
-        ? "\$(\${READLINK_TOOL} -m ${spark_local_dir})/spark-${workflow.sessionId}"
-        : "/tmp/spark-${workflow.sessionId}"
-    """
-    full_spark_local_dir="${spark_local_session_dir}"
-    """
 }
