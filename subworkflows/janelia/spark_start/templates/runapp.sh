@@ -63,6 +63,10 @@ CMD=(
     --driver-cores ${spark.driver_cpus}
     --driver-memory ${driver_memory_str}
     "${app_jar_file}"
+    --spark-conf "spark.driver.extraClassPath=${app_jar_file}"
+    --spark-conf "spark.executor.extraClassPath=${app_jar_file}"
+    --spark-conf "spark.jars.ivy=\${full_spark_work_dir}"
+    --spark-conf "spark.driver.extraJavaOptions=-Dnative.libpath.verbose=true"
     ${app_args}
 )
 
