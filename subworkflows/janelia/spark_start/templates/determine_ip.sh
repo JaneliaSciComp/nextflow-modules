@@ -4,17 +4,7 @@
 container_engine=$1
 
 local_ip=
-if [ "$container_engine" = "docker" ]; then
-    for interface in /sys/class/net/{eth*,en*,em*}; do
-        [ -e $interface ] && \
-        [ `cat $interface/operstate` == "up" ] && \
-        local_ip=$(ifconfig `basename $interface` | grep "inet " | awk '$1=="inet" {print $2; exit}' | sed s/addr://g)
-        if [[ "$local_ip" != "" ]]; then
-            echo "Use IP: $local_ip"
-            break
-        fi
-    done
-elif command -v ipconfig >/dev/null 2>&1; then
+if command -v ipconfig >/dev/null 2>&1; then
     echo "Use ipconfig to get the IP"
     # macOS: resolve the interface of the default route, then ask for its IPv4
     iface=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
@@ -29,6 +19,19 @@ else
     local_ip=$(ifconfig 2>/dev/null | awk '/inet /&&$2!="127.0.0.1"{print $2; exit}')
 fi
 if [[ -z "${local_ip}" ]] ; then
-    echo "Could not determine local IP: local_ip is empty"
-    exit 1
+    if [ "$container_engine" = "docker" ]; then
+        for interface in /sys/class/net/{eth*,en*,em*}; do
+            [ -e $interface ] && \
+            [ `cat $interface/operstate` == "up" ] && \
+            local_ip=$(ifconfig `basename $interface` | grep "inet " | awk '$1=="inet" {print $2; exit}' | sed s/addr://g)
+            if [[ "$local_ip" != "" ]]; then
+                echo "Use IP: $local_ip"
+                break
+            fi
+        done
+    fi
+    if [[ "$local_ip" == "" ]]; then
+        echo "Could not determine local IP: local_ip is empty"
+        exit 1
+    fi
 fi
