@@ -15,14 +15,17 @@ if [ "$container_engine" = "docker" ]; then
         fi
     done
 elif command -v ipconfig >/dev/null 2>&1; then
+    echo "Use ipconfig to get the IP"
     # macOS: resolve the interface of the default route, then ask for its IPv4
     iface=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
     local_ip=$(ipconfig getifaddr "$iface")
 elif command -v ip >/dev/null 2>&1; then
+    echo "Use ip to get the IP"
     # Linux fallback if hostname -I unavailable
     local_ip=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | tail -1)
 else
     # Last resort
+    echo "Use ifconfig to get the IP"
     local_ip=$(ifconfig 2>/dev/null | awk '/inet /&&$2!="127.0.0.1"{print $2; exit}')
 fi
 if [[ -z "${local_ip}" ]] ; then
