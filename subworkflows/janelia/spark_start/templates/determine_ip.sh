@@ -10,21 +10,22 @@ if [ "$container_engine" = "docker" ]; then
         [ `cat $interface/operstate` == "up" ] && \
         local_ip=$(ifconfig `basename $interface` | grep "inet " | awk '$1=="inet" {print $2; exit}' | sed s/addr://g)
         if [[ "$local_ip" != "" ]]; then
-            echo "Use Spark IP: $local_ip"
+            echo "Use IP: $local_ip"
             break
         fi
     done
-    if [[ -z "${local_ip}" ]] ; then
-        echo "Could not determine local IP: local_ip is empty"
-        exit 1
-    fi
+elif command -v ipconfig >/dev/null 2>&1; then
+    # macOS: resolve the interface of the default route, then ask for its IPv4
+    iface=$(route -n get default 2>/dev/null | awk '/interface:/{print $2}')
+    local_ip=$(ipconfig getifaddr "$iface")
+elif command -v ip >/dev/null 2>&1; then
+    # Linux fallback if hostname -I unavailable
+    local_ip=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | tail -1)
 else
-    # Take the last IP that's listed by hostname -i.
-    # This hack works on Janelia Cluster and AWS EC2.
-    local_ip=`hostname -i | awk '{print $NF}'`
-    echo "Use Spark IP: $local_ip"
-    if [[ -z "${local_ip}" ]] ; then
-        echo "Could not determine local IP: local_ip is empty"
-        exit 1
-    fi
+    # Last resort
+    local_ip=$(ifconfig 2>/dev/null | awk '/inet /&&$2!="127.0.0.1"{print $2; exit}')
+fi
+if [[ -z "${local_ip}" ]] ; then
+    echo "Could not determine local IP: local_ip is empty"
+    exit 1
 fi
