@@ -35,7 +35,8 @@ function cleanup() {
         dpid=\$(cat "\${scheduler_pid_file}" 2>/dev/null || true)
         [[ -n "\${dpid}" ]] && kill -9 "\$dpid" 2>/dev/null || true
     fi
-    exit \$manager_exit_code
+    echo "Exit manager with \${manager_exit_code}"
+    exit \${manager_exit_code}
 }
 trap cleanup EXIT
 

@@ -37,7 +37,8 @@ function cleanup() {
         wpid=\$(cat "\${worker_pid_file}" 2>/dev/null || true)
         [[ -n "\${wpid}" ]] && kill -9 "\$wpid" 2>/dev/null || true
     fi
-    exit \$worker_exit_code
+    echo "Exit worker with \${worker_exit_code}"
+    exit \${worker_exit_code}
 }
 trap cleanup EXIT
 
