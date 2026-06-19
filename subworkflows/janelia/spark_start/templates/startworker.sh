@@ -19,7 +19,7 @@ rm -f \${spark_worker_log_file} || true
 
 # Initialize the environment for Spark
 echo "Initializing Spark environment..."
-export SPARK_WORKER_OPTS="-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=1 -Dspark.port.maxRetries=64"
+export SPARK_WORKER_OPTS="-Dspark.worker.cleanup.enabled=true -Dspark.worker.cleanup.interval=30 -Dspark.worker.cleanup.appDataTtl=60 -Dspark.port.maxRetries=64"
 export SPARK_ENV_LOADED=
 export SPARK_HOME=/opt/spark
 export PYSPARK_PYTHONPATH_SET=
@@ -56,30 +56,35 @@ attempt_setup_fake_passwd_entry
 spid=\$!
 set +x
 
-# The trap pattern below preserves Nextflow's env-capture epilogue:
-# Nextflow appends the lines that write .command.env to the END of this script,
-# so the wait loop must always reach the end of the file. Calling exit from
-# inside an INT/TERM trap (or via exit 1 in the loop) bypasses that epilogue
-# and Nextflow then reports ".command.env not found".
-#
-# EXIT trap: kills the Spark process and applies the recorded exit code.
-#            Runs AFTER the env-capture epilogue, so .command.env is written
-#            first and the recorded exit code is still propagated.
-# INT/TERM trap: just sets a flag; the wait loop breaks cleanly on next tick.
 worker_exit_code=0
+_signal_received=0
 
 function cleanup() {
-    echo "Killing background processes"
-    [[ -n "\${spid:-}" ]] && kill -9 "\$spid" || true
+    if [[ -n "\${spid:-}" ]] && kill -0 "\${spid}" 2>/dev/null; then
+        # SIGTERM lets tini forward the signal to the spark JVM for a clean exit.
+        # kill -9 on tini alone leaves the JVM alive as an orphan.
+        kill -TERM "\${spid}" 2>/dev/null || true
+        local i=0
+        while (( i < 10 )) && kill -0 "\${spid}" 2>/dev/null; do
+            sleep 1
+            i=\$(( i + 1 ))
+        done
+        kill -9 "\${spid}" 2>/dev/null || true
+    fi
 }
 
-function on_signal() {
-    echo "Received termination signal, stopping worker"
+function on_term() {
+    echo "Received termination signal"
+    _signal_received=1
+}
+
+function on_exit() {
     cleanup
-    echo "Exit worker with \${worker_exit_code}"
     exit \${worker_exit_code}
 }
-trap on_signal EXIT INT TERM
+
+trap on_term INT TERM
+trap on_exit EXIT
 
 while true; do
     if ! kill -0 \$spid >/dev/null 2>&1; then
@@ -93,7 +98,12 @@ while true; do
         cat \${spark_worker_log_file}
         break
     fi
+    if (( _signal_received )); then
+        echo "Exiting due to received signal"
+        break
+    fi
     sleep \${sleep_secs} || true
 done
 
+echo "Killing background processes for sparkworker-${worker_id}"
 cleanup

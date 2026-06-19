@@ -79,34 +79,42 @@ attempt_setup_fake_passwd_entry
 spid=\$!
 set +x
 
-# The trap pattern below preserves Nextflow's env-capture epilogue:
-# Nextflow appends the lines that write .command.env to the END of this script,
-# so the wait loop must always reach the end of the file. Calling exit from
-# inside an INT/TERM trap (or via exit 1 in the loop) bypasses that epilogue
-# and Nextflow then reports ".command.env not found".
-#
-# EXIT trap: kills the Spark process and applies the recorded exit code.
-#            Runs AFTER the env-capture epilogue, so .command.env is written
-#            first and the recorded exit code is still propagated.
-# INT/TERM trap: just sets a flag; the wait loop breaks cleanly on next tick.
 manager_exit_code=0
+_signal_received=0
 
 function cleanup() {
-    echo "Killing background processes"
-    [[ -n "\${spid:-}" ]] && kill -9 "\${spid}" || true
+    if [[ -n "\${spid:-}" ]] && kill -0 "\${spid}" 2>/dev/null; then
+        # SIGTERM lets tini forward the signal to the spark JVM for a clean exit.
+        # kill -9 on tini alone leaves the JVM alive as an orphan.
+        kill -TERM "\${spid}" 2>/dev/null || true
+        local i=0
+        while (( i < 10 )) && kill -0 "\${spid}" 2>/dev/null; do
+            sleep 1
+            i=\$(( i + 1 ))
+        done
+        kill -9 "\${spid}" 2>/dev/null || true
+    fi
 }
 
-function on_signal() {
-    echo "Received termination signal, stopping manager"
+# INT/TERM: just set a flag so the loop can break cleanly and the Nextflow
+# env-capture epilogue (appended after this script) still runs before we exit.
+function on_term() {
+    echo "Received termination signal"
+    _signal_received=1
+}
+
+# EXIT: runs after the epilogue has been written, so .command.env is intact.
+function on_exit() {
     cleanup
-    echo "Exit manager with \${manager_exit_code}"
     exit \${manager_exit_code}
 }
-trap on_signal EXIT INT TERM
+
+trap on_term INT TERM
+trap on_exit EXIT
 
 while true; do
-    if ! kill -0 \$spid >/dev/null 2>&1; then
-        echo "Process \$spid died"
+    if ! kill -0 \${spid} >/dev/null 2>&1; then
+        echo "Process \${spid} died"
         cat \${spark_master_log_file} >&2
         manager_exit_code=1
         break
@@ -116,7 +124,12 @@ while true; do
         cat \${spark_master_log_file}
         break
     fi
+    if (( _signal_received )); then
+        echo "Exiting due to received signal"
+        break
+    fi
     sleep \${sleep_secs} || true
 done
 
+echo "Killing background spark-master"
 cleanup
